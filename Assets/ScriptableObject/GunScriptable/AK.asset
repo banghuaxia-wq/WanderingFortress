@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ec9e2913d21c304ebdaa28cb17f2c68, type: 3}
+  m_Name: AK
+  m_EditorClassIdentifier: 
+  gunName: AK
+  bulletProfile: {fileID: 11400000, guid: c970883dbaee24842873ef3f60dce944, type: 2}
+  damageOverride: 30
+  speedOverride: 30
+  lifetimeOverride: 1
