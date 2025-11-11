@@ -167,7 +167,6 @@ GameObject:
   - component: {fileID: 183573337}
   - component: {fileID: 183573339}
   - component: {fileID: 183573338}
-  - component: {fileID: 183573340}
   m_Layer: 5
   m_Name: crosshair
   m_TagString: Untagged
@@ -232,24 +231,84 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 183573336}
   m_CullTransparentMesh: 1
---- !u!114 &183573340
-MonoBehaviour:
+--- !u!1001 &212692524
+PrefabInstance:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 183573336}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 883976d7ff5dd024d978d41c845fc6cc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
-  raycastDistance: 100
-  groundLayerMask:
-    m_Bits: 1
-  crosshairRectTransform: {fileID: 0}
-  cachedCrosshairWorldPosition: {x: 0, y: 0, z: 0}
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -4.416184
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.00000017881393
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.32811487
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_Name
+      value: run
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 28541e4a6a2cc934b923bc1e008ac287,
+        type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 570cfb9b0012c9e43b887e5522032a29, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 28541e4a6a2cc934b923bc1e008ac287, type: 3}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -262,7 +321,6 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
-  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -388,22 +446,6 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
---- !u!114 &330585548
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 330585543}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cca9940f286b960469cb04c1632c46f4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  target: {fileID: 1194430513}
-  cameraHeight: 15
-  followSpeed: 10
-  offset: {x: 0, y: 0, z: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -674,9 +716,7 @@ GameObject:
   - component: {fileID: 1194430511}
   - component: {fileID: 1194430510}
   - component: {fileID: 1194430509}
-  - component: {fileID: 1194430514}
   - component: {fileID: 1194430515}
-  - component: {fileID: 1194430516}
   m_Layer: 0
   m_Name: Player_Capsule
   m_TagString: Untagged
@@ -800,7 +840,7 @@ Transform:
   - {fileID: 1997516922}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1194430514
+--- !u!114 &1194430515
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -812,38 +852,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 364f67f579f13eb4a9c7b7ae42f64f60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
---- !u!114 &1194430515
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1194430508}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 55ca11400c7ae974eba8f52e053db8a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  bulletSpawnPoint: {fileID: 1997516922}
-  equippedGunConfig: {fileID: 11400000, guid: 019932ed7de09414793122e81839b88f, type: 2}
-  crosshairController: {fileID: 183573340}
-  lastFireTime: 0
-  fireInterval: 0
---- !u!114 &1194430516
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1194430508}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b5a6b3b933e17c4b88db22ed3f56c6c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  crosshairController: {fileID: 183573340}
-  rotationSpeed: 720
+  walkSpeed: 5
+  runSpeed: 10
 --- !u!1 &1332813562
 GameObject:
   m_ObjectHideFlags: 0
@@ -1348,3 +1358,4 @@ SceneRoots:
   - {fileID: 1194430513}
   - {fileID: 1332813566}
   - {fileID: 1692684221}
+  - {fileID: 212692524}
