@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d806cee97f8b54e44a9181e4a7997bc7, type: 3}
+  m_Name: Test556
+  m_EditorClassIdentifier: 
+  DamageAmount: 10
+  StunGainAmount: 5
+  Speed: 50
+  Lifetime: 2
+  Prefab: {fileID: 154440530695813302, guid: 361c3cf0f81b89c4c925f847a32cd8cc, type: 3}

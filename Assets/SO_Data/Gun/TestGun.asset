@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad36a76cad3829c4cae099af3066e578, type: 3}
+  m_Name: TestGun
+  m_EditorClassIdentifier: 
+  FireRate: 0.1
+  BulletsPerShot: 1
+  SpreadAngle: 0
+  AmmoType: {fileID: 11400000, guid: 05961b4e4ba496246afcde925869a84c, type: 2}
+  UseGunDamageOverride: 1
+  DamageOverride: 20
+  StunOverride: 15
