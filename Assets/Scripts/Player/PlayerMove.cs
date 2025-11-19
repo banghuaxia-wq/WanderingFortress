@@ -1,11 +1,18 @@
 using UnityEngine;
 
+/// <summary>
+/// 控制玩家的移动和旋转，包括行走、奔跑和朝向鼠标指针。
+/// </summary>
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerMove : MonoBehaviour
 {
+    // 移动输入的最小阈值，低于此值视为无移动
     private const float MovementThreshold = 0.01f;
+    // 移动输入阈值的平方，用于优化计算
     private const float MovementThresholdSqr = MovementThreshold * MovementThreshold;
+    // 默认的旋转插值速度
     private const float DefaultRotationSlerpSpeed = 15f;
+    // 鼠标射线检测的最大距离
     private const float MouseRaycastDistance = 500f;
 
     // Animator 引用和参数哈希
@@ -15,21 +22,33 @@ public class PlayerMove : MonoBehaviour
     private static readonly int IsRunningHash = Animator.StringToHash("IsRunning"); 
 
     [Header("Movement Settings")]
+    [Tooltip("行走速度")]
     public float walkSpeed = 5.0f;
+    [Tooltip("奔跑速度")]
     public float runSpeed = 10.0f;
     
+    [Tooltip("角色朝向目标方向的旋转速度")]
     [SerializeField] private float rotationSlerpSpeed = DefaultRotationSlerpSpeed;
 
     // 私有状态变量
+    // 是否处于冲刺状态
     private bool _isSprinting = false; 
+    // 当前的移动速度
     private float _currentSpeed;
     
     // 移动输入变量
+    // 玩家的移动输入向量
     private Vector3 _movementInput;
+    // 玩家是否有移动输入
     private bool _isMoving;
+    // 刚体组件的引用
     private Rigidbody _rb;
+    // 游戏主摄像机
     private Camera _gameplayCamera;
 
+    /// <summary>
+    /// 初始化组件引用和默认值。
+    /// </summary>
     void Awake()
     {
         _rb = GetComponent<Rigidbody>();
@@ -44,6 +63,9 @@ public class PlayerMove : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 每帧更新，处理玩家输入和状态切换。
+    /// </summary>
     void Update()
     {
         // 1. 获取WASD的输入值
@@ -89,7 +111,9 @@ public class PlayerMove : MonoBehaviour
         }
     }
 
-    // FixedUpdate用于处理物理运动和动画参数设置
+    /// <summary>
+    /// 在固定的时间间隔内更新，用于处理物理相关的移动、旋转和动画参数。
+    /// </summary>
     void FixedUpdate()
     {
         // ========================
@@ -161,6 +185,10 @@ public class PlayerMove : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 获取鼠标在世界空间中的方向（相对于玩家）。
+    /// </summary>
+    /// <returns>从玩家指向鼠标世界位置的归一化方向向量</returns>
     private Vector3 GetMouseWorldDirection()
     {
         if (_gameplayCamera == null)
@@ -187,6 +215,9 @@ public class PlayerMove : MonoBehaviour
         return Vector3.zero;
     }
 
+    /// <summary>
+    /// 获取游戏主摄像机。
+    /// </summary>
     private void AcquireGameplayCamera()
     {
         if (GameplayCameraProvider.TryGetGameplayCamera(out Camera camera))
