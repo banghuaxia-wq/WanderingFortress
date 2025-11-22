@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -23,17 +24,17 @@ public class EnemyCombatController : MonoBehaviour
     private const string DebugCaptureMessage = "[EnemyCombat] {0} 已被驯服并成为友方";
 
     [Tooltip("敌人的属性配置")]
-    [SerializeField] private ScriptableEnemy enemyStats;
-    [Tooltip("用于显示敌人状态的UI界面")]
-    [SerializeField] private EnemyStatusUI statusUI;
+    [SerializeField] private ScriptableHatch hatchStats;
     [Tooltip("可以驯服敌人的最大距离")]
     [SerializeField] private float tameRange = 2.5f;
+    //TODO:写在manager里面
     [Tooltip("玩家的Transform组件")]
     [SerializeField] private Transform playerTransform;
     [Tooltip("敌人的刚体组件")]
     [SerializeField] private Rigidbody enemyRigidbody;
     [Tooltip("敌人的材质控制器")]
     [SerializeField] private EnemyMaterialController materialController;
+    //TODO:写在manager里面
     [Tooltip("盟友跟随控制器")]
     [SerializeField] private AllyFollower allyFollower;
     [Tooltip("是否启用调试日志")]
@@ -58,6 +59,48 @@ public class EnemyCombatController : MonoBehaviour
     // 驯服范围的平方，用于优化距离计算
     private float _cachedTameRangeSqr;
 
+    // -- 事件定义 --
+    /// <summary>
+    /// 当生命值更新时触发。参数：当前生命值, 最大生命值
+    /// </summary>
+    public event Action<float, float> OnHealthChanged;
+
+    /// <summary>
+    /// 当眩晕值更新时触发。参数：当前眩晕值, 最大眩晕值
+    /// </summary>
+    public event Action<float, float> OnStunChanged;
+
+    /// <summary>
+    /// 当敌人进入眩晕状态时触发。
+    /// </summary>
+    public event Action OnStunned;
+
+    /// <summary>
+    /// 当敌人被驯服时触发。
+    /// </summary>
+    public event Action OnTamed;
+
+    /// <summary>
+    /// 当敌人被击败时触发。
+    /// </summary>
+    public event Action OnDefeated;
+
+    /// <summary>
+    /// 当需要显示或更新提示信息时触发。参数：提示信息, 是否显示
+    /// </summary>
+    public event Action<string, bool> OnTooltipChanged;
+
+    /// <summary>
+    /// 当需要显示状态UI时触发
+    /// </summary>
+    public event Action OnShowStatus;
+
+    /// <summary>
+    /// 初始化时触发，用于传递初始状态。参数：最大生命值, 最大眩晕值
+    /// </summary>
+    public event Action<float, float> OnInitialized;
+
+
     /// <summary>
     /// 初始化组件引用。
     /// </summary>
@@ -66,6 +109,12 @@ public class EnemyCombatController : MonoBehaviour
         if (enemyRigidbody == null)
         {
             enemyRigidbody = GetComponent<Rigidbody>();
+        }
+        if (enemyRigidbody != null)
+        {
+            enemyRigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            enemyRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            enemyRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
         }
 
         if (materialController == null)
@@ -78,6 +127,12 @@ public class EnemyCombatController : MonoBehaviour
             allyFollower = GetComponent<AllyFollower>();
         }
 
+        var capsule = GetComponent<CapsuleCollider>();
+        if (capsule != null)
+        {
+            capsule.direction = 1;
+        }
+
         if (playerTransform == null)
         {
             GameObject playerObject = GameObject.FindGameObjectWithTag(PlayerTag);
@@ -87,7 +142,7 @@ public class EnemyCombatController : MonoBehaviour
             }
         }
 
-        if (enemyStats == null)
+        if (hatchStats == null)
         {
             Debug.LogError("Enemy stats asset is not assigned.", this);
         }
@@ -133,26 +188,20 @@ public class EnemyCombatController : MonoBehaviour
     /// </summary>
     public void InitializeCombatState()
     {
-        if (enemyStats == null)
+        if (hatchStats == null)
         {
             return;
         }
 
-        _currentHealth = enemyStats.MaxHealth;
+        _currentHealth = hatchStats.MaxHealth;
         _currentStun = MinValue;
         _currentState = EnemyState.Active;
         float tameRadius = tameRange + TooltipBuffer;
         _cachedTameRangeSqr = tameRadius * tameRadius;
 
-        if (statusUI != null)
-        {
-            statusUI.AttachToTarget(transform);
-            statusUI.ConfigureBars(enemyStats.MaxHealth, enemyStats.MaxStunValue);
-            statusUI.UpdateHealthBar(_currentHealth);
-            statusUI.UpdateStunBar(_currentStun);
-            statusUI.HideTooltip();
-            statusUI.HideStatusImmediate();
-        }
+        OnInitialized?.Invoke(hatchStats.MaxHealth, hatchStats.MaxStunValue);
+        OnHealthChanged?.Invoke(_currentHealth, hatchStats.MaxHealth);
+        OnStunChanged?.Invoke(_currentStun, hatchStats.MaxStunValue);
 
         if (materialController != null)
         {
@@ -174,7 +223,7 @@ public class EnemyCombatController : MonoBehaviour
     /// <param name="stunGain">增加的眩晕值</param>
     public void ReceiveProjectileHit(float damageAmount, float stunGain)
     {
-        if (_currentState == EnemyState.Ally || enemyStats == null)
+        if (_currentState == EnemyState.Ally || hatchStats == null)
         {
             return;
         }
@@ -185,16 +234,13 @@ public class EnemyCombatController : MonoBehaviour
         }
 
         _currentHealth = Mathf.Max(MinValue, _currentHealth - damageAmount);
-        _currentStun = Mathf.Min(enemyStats.MaxStunValue, _currentStun + stunGain);
+        _currentStun = Mathf.Min(hatchStats.MaxStunValue, _currentStun + stunGain);
 
-        if (statusUI != null)
-        {
-            statusUI.UpdateHealthBar(_currentHealth);
-            statusUI.UpdateStunBar(_currentStun);
-            statusUI.ShowStatus();
-        }
+        OnShowStatus?.Invoke();
+        OnHealthChanged?.Invoke(_currentHealth, hatchStats.MaxHealth);
+        OnStunChanged?.Invoke(_currentStun, hatchStats.MaxStunValue);
 
-        if (_currentStun >= enemyStats.MaxStunValue && _currentState != EnemyState.Stunned)
+        if (_currentStun >= hatchStats.MaxStunValue && _currentState != EnemyState.Stunned)
         {
             EnterStunnedState();
         }
@@ -207,21 +253,35 @@ public class EnemyCombatController : MonoBehaviour
         LogStateDebug("受击后");
     }
 
+    public void ReceiveBuffDamage(float damageAmount)
+    {
+        if (_currentState == EnemyState.Ally || hatchStats == null)
+        {
+            return;
+        }
+        _currentHealth = Mathf.Max(MinValue, _currentHealth - damageAmount);
+        OnShowStatus?.Invoke();
+        OnHealthChanged?.Invoke(_currentHealth, hatchStats.MaxHealth);
+        if (_currentHealth <= MinValue && _currentState != EnemyState.Ally)
+        {
+            HandleDefeat();
+        }
+        LogStateDebug("受击后");
+    }
+
     /// <summary>
     /// 更新眩晕值的衰减。
     /// </summary>
     private void UpdateStunDecay()
     {
-        if (_currentStun <= MinValue || enemyStats == null)
+        if (_currentStun <= MinValue || hatchStats == null)
         {
             return;
         }
 
-        _currentStun = Mathf.Max(MinValue, _currentStun - enemyStats.StunDecayRate * Time.deltaTime);
-        if (statusUI != null)
-        {
-            statusUI.UpdateStunBar(_currentStun);
-        }
+        _currentStun = Mathf.Max(MinValue, _currentStun - hatchStats.StunDecayRate * Time.deltaTime);
+        
+        OnStunChanged?.Invoke(_currentStun, hatchStats.MaxStunValue);
     }
 
     /// <summary>
@@ -230,15 +290,12 @@ public class EnemyCombatController : MonoBehaviour
     private void EnterStunnedState()
     {
         _currentState = EnemyState.Stunned;
-        _currentStun = enemyStats != null ? enemyStats.MaxStunValue : _currentStun;
+        _currentStun = hatchStats != null ? hatchStats.MaxStunValue : _currentStun;
         StopMovementImmediate();
 
-        if (statusUI != null)
-        {
-            statusUI.UpdateStunBar(_currentStun);
-            statusUI.ShowStatus();
-            statusUI.ShowTooltip("按 E 驯服");
-        }
+        OnStunned?.Invoke();
+        OnStunChanged?.Invoke(_currentStun, hatchStats.MaxStunValue);
+        OnTooltipChanged?.Invoke("按 E 驯服", true);
 
         if (enableDebugLogs)
         {
@@ -262,17 +319,7 @@ public class EnemyCombatController : MonoBehaviour
         float distanceSqr = offsetToPlayer.sqrMagnitude;
         bool isInRange = distanceSqr <= _cachedTameRangeSqr;
 
-        if (statusUI != null)
-        {
-            if (isInRange)
-            {
-                statusUI.ShowTooltip("按 E 驯服");
-            }
-            else
-            {
-                statusUI.HideTooltip();
-            }
-        }
+        OnTooltipChanged?.Invoke("按 E 驯服", isInRange);
 
         if (!isInRange)
         {
@@ -291,19 +338,15 @@ public class EnemyCombatController : MonoBehaviour
     private void BecomeAlly()
     {
         _currentState = EnemyState.Ally;
-        if (enemyStats != null)
+        if (hatchStats != null)
         {
-            _currentHealth = enemyStats.MaxHealth;
+            _currentHealth = hatchStats.MaxHealth;
         }
         _currentStun = MinValue;
 
-        if (statusUI != null)
-        {
-            statusUI.HideTooltip();
-            statusUI.ShowStatus();
-            statusUI.UpdateStunBar(_currentStun);
-            statusUI.UpdateHealthBar(_currentHealth);
-        }
+        OnTamed?.Invoke();
+        OnHealthChanged?.Invoke(_currentHealth, hatchStats.MaxHealth);
+        OnStunChanged?.Invoke(_currentStun, hatchStats.MaxStunValue);
 
         if (materialController != null)
         {
@@ -331,10 +374,8 @@ public class EnemyCombatController : MonoBehaviour
         _currentState = EnemyState.Stunned;
         StopMovementImmediate();
 
-        if (statusUI != null)
-        {
-            statusUI.ShowTooltip("敌人倒下");
-        }
+        OnDefeated?.Invoke();
+        OnTooltipChanged?.Invoke("敌人倒下", true);
 
         LogStateDebug("生命耗尽");
     }
@@ -375,7 +416,7 @@ public class EnemyCombatController : MonoBehaviour
     /// <param name="label">调试信息的标签</param>
     private void LogStateDebug(string label)
     {
-        if (!enableDebugLogs || enemyStats == null)
+        if (!enableDebugLogs || hatchStats == null)
         {
             return;
         }
@@ -386,9 +427,11 @@ public class EnemyCombatController : MonoBehaviour
             label,
             _currentState,
             _currentHealth,
-            enemyStats.MaxHealth,
+            hatchStats.MaxHealth,
             _currentStun,
-            enemyStats.MaxStunValue), this);
+            hatchStats.MaxStunValue), this);
     }
 }
+
+
 

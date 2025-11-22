@@ -15,11 +15,8 @@ public class GameplayCameraProvider : MonoBehaviour
     private Camera _cachedCamera;
 
     [Tooltip("如果为 true，则在加载新场景时不会销毁该摄像机。")]
-    [SerializeField] private bool makeDontDestroyOnLoad = false;
-
-    /// <summary>
+    [SerializeField] private bool makeDontDestroyOnLoad;
     /// 初始化单例实例并缓存摄像机组件。
-    /// </summary>
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -109,4 +106,5 @@ public class GameplayCameraProvider : MonoBehaviour
         return null;
     }
 }
+
 

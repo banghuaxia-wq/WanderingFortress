@@ -1,4 +1,5 @@
 using UnityEngine;
+using WF.Gameplay;
 
 /// <summary>
 /// 控制玩家的移动和旋转，包括行走、奔跑和朝向鼠标指针。
@@ -20,6 +21,7 @@ public class PlayerMove : MonoBehaviour
     // 使用 Hash 可以提高性能
     private static readonly int MovementSpeedHash = Animator.StringToHash("MovementSpeed");
     private static readonly int IsRunningHash = Animator.StringToHash("IsRunning"); 
+    private static readonly int RollTriggerHash = Animator.StringToHash("Roll");
 
     [Header("Movement Settings")]
     [Tooltip("行走速度")]
@@ -29,6 +31,14 @@ public class PlayerMove : MonoBehaviour
     
     [Tooltip("角色朝向目标方向的旋转速度")]
     [SerializeField] private float rotationSlerpSpeed = DefaultRotationSlerpSpeed;
+
+    [Header("Roll Settings")]
+    [SerializeField] private float rollSpeed = 12f;
+    [SerializeField] private float rollDuration = 0.35f;
+    [SerializeField] private float rollIFrameSeconds = 0.25f;
+
+    [Header("Shooting Settings")]
+    [SerializeField] private float shootingWalkSpeed = 3.5f;
 
     // 私有状态变量
     // 是否处于冲刺状态
@@ -41,6 +51,10 @@ public class PlayerMove : MonoBehaviour
     private Vector3 _movementInput;
     // 玩家是否有移动输入
     private bool _isMoving;
+    private bool _isRolling;
+    private float _rollTimer;
+    private Vector3 _rollDirection;
+    private bool _isShooting;
     // 刚体组件的引用
     private Rigidbody _rb;
     // 游戏主摄像机
@@ -81,19 +95,30 @@ public class PlayerMove : MonoBehaviour
 
         
         // --- 2. 奔跑状态切换逻辑 ---
-        
-        // A. 奔跑锁定启动条件: 玩家正在移动 并且 Shift 键被按住 (GetKey)
-        if (_isMoving && Input.GetKey(KeyCode.LeftShift))
+        if (_isMoving && Input.GetKeyDown(KeyCode.LeftShift))
         {
-            _isSprinting = true;
+            if (_isSprinting)
+            {
+                _isSprinting = false;
+            }
+            else
+            {
+                bool canSprint = PlayerStateManager.Instance == null || PlayerStateManager.Instance.CanSprint;
+                _isSprinting = canSprint;
+            }
         }
 
-        // B. 奔跑锁定关闭条件: 玩家停止了移动
-        if (!_isMoving)
+        if (!_isMoving || (PlayerStateManager.Instance != null && !PlayerStateManager.Instance.CanSprint))
         {
             _isSprinting = false;
         }
         
+        _isShooting = Input.GetButton("Fire1");
+        if (_isShooting)
+        {
+            _isSprinting = false;
+        }
+
         // --- 3. 确定当前速度 ---
         if (_isSprinting)
         {
@@ -103,11 +128,37 @@ public class PlayerMove : MonoBehaviour
         {
             _currentSpeed = walkSpeed; 
         }
+        if (_isShooting)
+        {
+            _currentSpeed = Mathf.Min(_currentSpeed, shootingWalkSpeed);
+        }
+
+        float speedMul = PlayerStateManager.Instance != null ? PlayerStateManager.Instance.MovementSpeedMultiplier : 1f;
+        _currentSpeed *= speedMul;
 
         // 限制对角线移动速度，将输入向量长度归一化为 1
         if (_movementInput.sqrMagnitude > 1)
         {
             _movementInput.Normalize();
+        }
+
+        if (!_isRolling && Input.GetKeyDown(KeyCode.Space))
+        {
+            Vector3 dir = _isMoving ? _movementInput.normalized : transform.forward;
+            if (dir.sqrMagnitude <= MovementThresholdSqr)
+            {
+                dir = transform.forward;
+            }
+            StartRoll(dir);
+        }
+
+        if (_isRolling)
+        {
+            _rollTimer -= Time.deltaTime;
+            if (_rollTimer <= 0f)
+            {
+                _isRolling = false;
+            }
         }
     }
 
@@ -120,15 +171,34 @@ public class PlayerMove : MonoBehaviour
         // 1. 物理运动处理
         // ========================
         
-        // 计算目标速度：移动方向 * 当前选择的速度 (_currentSpeed)
         Vector3 targetVelocity = _movementInput * _currentSpeed;
+        if (_isRolling)
+        {
+            targetVelocity = _rollDirection * rollSpeed;
+        }
         
         // 应用速度
         _rb.velocity = new Vector3(targetVelocity.x, _rb.velocity.y, targetVelocity.z);
 
         Vector3 desiredDirection = Vector3.zero;
 
-        if (_isSprinting && _isMoving)
+        if (_isRolling)
+        {
+            desiredDirection = _rollDirection;
+        }
+        else if (_isShooting)
+        {
+            if (_gameplayCamera == null)
+            {
+                AcquireGameplayCamera();
+            }
+            desiredDirection = GetMouseWorldDirection();
+            if (desiredDirection.sqrMagnitude <= MovementThresholdSqr && _isMoving)
+            {
+                desiredDirection = _movementInput.normalized;
+            }
+        }
+        else if (_isMoving)
         {
             desiredDirection = _movementInput.normalized;
         }
@@ -140,10 +210,6 @@ public class PlayerMove : MonoBehaviour
             }
 
             desiredDirection = GetMouseWorldDirection();
-            if (desiredDirection.sqrMagnitude <= MovementThresholdSqr && _isMoving)
-            {
-                desiredDirection = _movementInput.normalized;
-            }
         }
 
         if (desiredDirection.sqrMagnitude > MovementThresholdSqr)
@@ -182,6 +248,27 @@ public class PlayerMove : MonoBehaviour
             // 如果速度大于步行速度 (例如 walkSpeed - 1.0f)，并且正在移动，则设置为奔跑状态
             // 或者直接使用你代码中的 _isSprinting 变量
             _animator.SetBool(IsRunningHash, _isSprinting);
+        }
+    }
+
+    private void StartRoll(Vector3 direction)
+    {
+        if (PlayerStateManager.Instance != null)
+        {
+            if (!PlayerStateManager.Instance.CanRoll) return;
+            PlayerStateManager.Instance.ConsumeStaminaForRoll();
+        }
+        _isRolling = true;
+        _rollTimer = rollDuration;
+        _rollDirection = direction.normalized;
+        _isSprinting = false;
+        if (_animator != null)
+        {
+            _animator.SetTrigger(RollTriggerHash);
+        }
+        if (PlayerStateManager.Instance != null)
+        {
+            PlayerStateManager.Instance.SetInvincible(rollIFrameSeconds);
         }
     }
 
@@ -228,5 +315,18 @@ public class PlayerMove : MonoBehaviour
         {
             _gameplayCamera = Camera.main;
         }
+    }
+
+    /// <summary>
+    /// 暴露奔跑状态只读属性，供状态管理器查询。
+    /// </summary>
+    public bool IsSprinting => _isSprinting;
+
+    /// <summary>
+    /// 被状态管理器调用以强制结束奔跑（例如体力耗尽）。
+    /// </summary>
+    public void ForceStopSprint()
+    {
+        _isSprinting = false;
     }
 }
