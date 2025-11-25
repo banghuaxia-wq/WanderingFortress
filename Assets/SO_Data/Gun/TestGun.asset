@@ -14,8 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   FireRate: 0.1
   BulletsPerShot: 1
-  SpreadAngle: 0
+  SpreadAngle: 1
+  VerticalRecoilPerShot: 10
+  HorizontalRecoilPerShot: 5
+  RecoilDecayPerSecond: 60
+  VerticalRecoilMax: 200
+  HorizontalRecoilMax: 200
+  RandomizeHorizontalDirection: 1
   AmmoType: {fileID: 11400000, guid: 05961b4e4ba496246afcde925869a84c, type: 2}
   UseGunDamageOverride: 1
-  DamageOverride: 20
+  DamageOverride: 5
   StunOverride: 15
+  WeaponStunCoefficient: 5

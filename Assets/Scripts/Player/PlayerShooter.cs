@@ -18,11 +18,16 @@ public class PlayerShooter : MonoBehaviour
     [SerializeField] private Transform shootOrigin;
     [Tooltip("用于射线检测以确定瞄准点的层")]
     [SerializeField] private LayerMask aimLayerMask;
+    [SerializeField] private CrosshairController crosshair;
 
     // 下一次可以开火的时间
     private float _nextFireTime;
     // 游戏主摄像机
     private Camera _gameplayCamera;
+    private float _verticalRecoil;
+    private float _horizontalRecoil;
+    private Vector2 _axisVertical;
+    private Vector2 _axisHorizontal;
 
     /// <summary>
     /// 初始化射击点和摄像机引用。
@@ -35,6 +40,7 @@ public class PlayerShooter : MonoBehaviour
         }
 
         AcquireGameplayCamera();
+        if (crosshair == null) crosshair = FindObjectOfType<CrosshairController>();
     }
 
     /// <summary>
@@ -47,6 +53,9 @@ public class PlayerShooter : MonoBehaviour
             return;
         }
 
+        ApplyRecoilDecay();
+        UpdateCrosshairOffset();
+
         if (!Input.GetButton(FireInputName))
         {
             return;
@@ -58,6 +67,7 @@ public class PlayerShooter : MonoBehaviour
         }
 
         FireGun();
+        ApplyRecoilKick();
         float fireRate = Mathf.Max(MinimumFireInterval, equippedGun.FireRate);
         _nextFireTime = Time.time + fireRate;
     }
@@ -98,16 +108,46 @@ public class PlayerShooter : MonoBehaviour
             return;
         }
 
-        GameObject bulletInstance = Instantiate(ammoDefinition.Prefab, shootOrigin.position, Quaternion.LookRotation(direction));
-        if (!bulletInstance.TryGetComponent(out BulletProjectile projectile))
+        GameObject bulletInstance = null;
+        if (WF.Gameplay.PoolManager.Instance != null)
         {
-            projectile = bulletInstance.AddComponent<BulletProjectile>();
+            bulletInstance = WF.Gameplay.PoolManager.Instance.Get(ammoDefinition.Prefab);
+            if (bulletInstance != null)
+            {
+                bulletInstance.transform.SetPositionAndRotation(shootOrigin.position, Quaternion.LookRotation(direction));
+            }
+        }
+        if (bulletInstance == null)
+        {
+            bulletInstance = Instantiate(ammoDefinition.Prefab, shootOrigin.position, Quaternion.LookRotation(direction));
+            var po = bulletInstance.GetComponent<WF.Gameplay.PooledObject>();
+            if (po == null) po = bulletInstance.AddComponent<WF.Gameplay.PooledObject>();
+            po.SourcePrefab = ammoDefinition.Prefab;
+        }
+        if (!bulletInstance.TryGetComponent(out Projectile projectile))
+        {
+            projectile = bulletInstance.AddComponent<Projectile>();
         }
 
         float damage = equippedGun.UseGunDamageOverride ? equippedGun.DamageOverride : ammoDefinition.DamageAmount;
-        float stun = equippedGun.UseGunDamageOverride ? equippedGun.StunOverride : ammoDefinition.StunGainAmount;
-
-        projectile.Initialize(ammoDefinition.Speed, ammoDefinition.Lifetime, damage, stun, direction);
+        float instantStun = Mathf.Max(0f, damage * Mathf.Max(0f, equippedGun.WeaponStunCoefficient));
+        float delayedStun = instantStun * 0.5f;
+        var payload = new WF.Gameplay.DamageInfo
+        {
+            Source = gameObject,
+            Damage = damage,
+            InstantStun = instantStun,
+            Type = WF.Gameplay.DamageType.Physical,
+            AppliedBuffs = null
+        };
+        if (ammoDefinition.SedativeBuffData != null && delayedStun > 0f)
+        {
+            payload.AppliedBuffs = new System.Collections.Generic.List<WF.Gameplay.AppliedBuff>
+            {
+                new WF.Gameplay.AppliedBuff { Buff = ammoDefinition.SedativeBuffData, ExtraValue = delayedStun }
+            };
+        }
+        projectile.Initialize(ammoDefinition.Speed, ammoDefinition.Lifetime, direction, payload);
     }
 
     /// <summary>
@@ -117,16 +157,24 @@ public class PlayerShooter : MonoBehaviour
     /// <returns>应用散射后的射击方向</returns>
     private Vector3 ApplySpread(Vector3 baseDirection)
     {
-        if (equippedGun.SpreadAngle <= 0f || equippedGun.BulletsPerShot == 1)
+        float angle = Mathf.Max(0f, equippedGun.SpreadAngle);
+        if (angle <= 0f)
         {
-            return baseDirection;
+            return baseDirection.normalized;
         }
-
-        float spreadAngle = Random.Range(-equippedGun.SpreadAngle, equippedGun.SpreadAngle);
-        Quaternion spreadRotation = Quaternion.AngleAxis(spreadAngle, Vector3.up);
-        Vector3 spreadDirection = spreadRotation * baseDirection;
-        spreadDirection.Normalize();
-        return spreadDirection;
+        baseDirection.Normalize();
+        float angleRad = angle * Mathf.Deg2Rad;
+        float u = Random.value;
+        float cosTheta = Mathf.Lerp(Mathf.Cos(angleRad), 1f, u);
+        float sinTheta = Mathf.Sqrt(1f - cosTheta * cosTheta);
+        float phi = Random.value * Mathf.PI * 2f;
+        Vector3 n = baseDirection;
+        Vector3 arbitrary = Mathf.Abs(n.y) < 0.99f ? Vector3.up : Vector3.right;
+        Vector3 t = Vector3.Normalize(Vector3.Cross(arbitrary, n));
+        Vector3 b = Vector3.Cross(n, t);
+        Vector3 dir = t * (sinTheta * Mathf.Cos(phi)) + b * (sinTheta * Mathf.Sin(phi)) + n * cosTheta;
+        dir.Normalize();
+        return dir;
     }
 
     /// <summary>
@@ -140,7 +188,16 @@ public class PlayerShooter : MonoBehaviour
             return Vector3.zero;
         }
 
-        Ray aimRay = _gameplayCamera.ScreenPointToRay(Input.mousePosition);
+        Vector3 playerScreen = _gameplayCamera.WorldToScreenPoint(shootOrigin.position);
+        Vector2 toMouse = new Vector2(Input.mousePosition.x - playerScreen.x, Input.mousePosition.y - playerScreen.y);
+        if (toMouse.sqrMagnitude < MinAimDirectionSqr) return Vector3.zero;
+        toMouse.Normalize();
+        Vector2 perp = new Vector2(-toMouse.y, toMouse.x);
+        _axisVertical = toMouse;
+        _axisHorizontal = perp;
+        Vector2 offset = _axisVertical * _verticalRecoil + _axisHorizontal * _horizontalRecoil;
+        Vector3 mouse = new Vector3(Input.mousePosition.x + offset.x, Input.mousePosition.y + offset.y, 0f);
+        Ray aimRay = _gameplayCamera.ScreenPointToRay(mouse);
 
         if (Physics.Raycast(aimRay, out RaycastHit hitInfo, Mathf.Infinity, aimLayerMask))
         {
@@ -179,6 +236,46 @@ public class PlayerShooter : MonoBehaviour
         {
             _gameplayCamera = Camera.main;
         }
+    }
+
+    private void ApplyRecoilKick()
+    {
+        if (equippedGun == null) return;
+        Vector3 playerScreen = _gameplayCamera != null ? _gameplayCamera.WorldToScreenPoint(shootOrigin.position) : new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+        Vector2 toMouse = new Vector2(Input.mousePosition.x - playerScreen.x, Input.mousePosition.y - playerScreen.y);
+        if (toMouse.sqrMagnitude < MinAimDirectionSqr) return;
+        toMouse.Normalize();
+        Vector2 perp = new Vector2(-toMouse.y, toMouse.x);
+        _axisVertical = toMouse;
+        _axisHorizontal = perp;
+        float v = equippedGun.VerticalRecoilPerShot;
+        float h = equippedGun.HorizontalRecoilPerShot * (equippedGun.RandomizeHorizontalDirection ? (Random.value < 0.5f ? -1f : 1f) : 1f);
+        _verticalRecoil = Mathf.Clamp(_verticalRecoil + v, -equippedGun.VerticalRecoilMax, equippedGun.VerticalRecoilMax);
+        _horizontalRecoil = Mathf.Clamp(_horizontalRecoil + h, -equippedGun.HorizontalRecoilMax, equippedGun.HorizontalRecoilMax);
+    }
+
+    private void ApplyRecoilDecay()
+    {
+        if (equippedGun == null) return;
+        float decay = Mathf.Max(0f, equippedGun.RecoilDecayPerSecond) * Time.deltaTime;
+        _verticalRecoil = Mathf.MoveTowards(_verticalRecoil, 0f, decay);
+        _horizontalRecoil = Mathf.MoveTowards(_horizontalRecoil, 0f, decay);
+    }
+
+    private void UpdateCrosshairOffset()
+    {
+        if (crosshair == null || _gameplayCamera == null) return;
+        Vector3 playerScreen = _gameplayCamera.WorldToScreenPoint(shootOrigin.position);
+        Vector2 toMouse = new Vector2(Input.mousePosition.x - playerScreen.x, Input.mousePosition.y - playerScreen.y);
+        if (toMouse.sqrMagnitude < MinAimDirectionSqr)
+        {
+            crosshair.SetExternalOffset(Vector2.zero);
+            return;
+        }
+        toMouse.Normalize();
+        Vector2 perp = new Vector2(-toMouse.y, toMouse.x);
+        Vector2 offset = toMouse * _verticalRecoil + perp * _horizontalRecoil;
+        crosshair.SetExternalOffset(offset);
     }
 }
 

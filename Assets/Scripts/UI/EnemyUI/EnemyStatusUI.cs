@@ -38,6 +38,10 @@ public class EnemyStatusUI : MonoBehaviour
 
     [Tooltip("如果为true，状态栏将始终可见")]
     [SerializeField] private bool alwaysVisible = false;
+    [Tooltip("淡入持续时间（秒）")]
+    [SerializeField] private float fadeInDuration = 0.2f;
+    [Tooltip("淡出持续时间（秒）")]
+    [SerializeField] private float fadeOutDuration = 0.2f;
 
     // UI跟随的目标
     private Transform _target;
@@ -49,6 +53,8 @@ public class EnemyStatusUI : MonoBehaviour
     private float _hideTimer;
     // 是否强制显示（例如，当显示工具提示时）
     private bool _isForcedVisible;
+    private float _targetAlpha;
+    private float _lastStun;
     // 父Canvas组件
     private Canvas _parentCanvas;
     // 父Canvas是否为世界空间模式
@@ -74,6 +80,7 @@ public class EnemyStatusUI : MonoBehaviour
 
         AcquireCamera();
         HideStatusImmediate();
+        ShowStatus();
     }
 
     /// <summary>
@@ -104,6 +111,8 @@ public class EnemyStatusUI : MonoBehaviour
         {
             tooltipText.gameObject.SetActive(false);
         }
+        _targetAlpha = 0f;
+        _lastStun = 0f;
     }
 
     /// <summary>
@@ -112,6 +121,11 @@ public class EnemyStatusUI : MonoBehaviour
     private void OnEnable()
     {
         AcquireCamera();
+    }
+
+    private void OnDisable()
+    {
+        UnsubscribeFromEvents();
     }
 
     /// <summary>
@@ -160,6 +174,7 @@ public class EnemyStatusUI : MonoBehaviour
             if (hasCanvasGroup && screenPoint.z < MinDistanceToCamera)
             {
                 canvasGroup.alpha = 0f;
+                _targetAlpha = 0f;
                 return;
             }
 
@@ -176,9 +191,11 @@ public class EnemyStatusUI : MonoBehaviour
             _hideTimer -= Time.deltaTime;
             if (_hideTimer <= 0f)
             {
-                HideStatusImmediate();
+                HideStatus();
             }
         }
+
+        UpdateFade();
     }
 
     #region 事件订阅与处理
@@ -214,6 +231,7 @@ public class EnemyStatusUI : MonoBehaviour
     private void HandleInitialized(float maxHealth, float maxStun)
     {
         ConfigureBars(maxHealth, maxStun);
+        ShowStatus();
     }
 
     private void HandleHealthChanged(float currentHealth, float maxHealth)
@@ -224,6 +242,15 @@ public class EnemyStatusUI : MonoBehaviour
     private void HandleStunChanged(float currentStun, float maxStun)
     {
         UpdateStunBar(currentStun);
+        if (currentStun <= 0f && !alwaysVisible)
+        {
+            HideStatusImmediate();
+        }
+        else
+        {
+            ShowStatus();
+        }
+        _lastStun = currentStun;
     }
 
     private void HandleStunned()
@@ -313,18 +340,15 @@ public class EnemyStatusUI : MonoBehaviour
     /// </summary>
     private void ShowStatus()
     {
-        if (canvasGroup == null)
-        {
-            return;
-        }
-
-        canvasGroup.alpha = 1f;
+        if (canvasGroup == null) return;
+        _targetAlpha = 1f;
         float delay = Mathf.Max(hideDelay, MinHideDelay);
         _hideTimer = delay;
 
         if (alwaysVisible)
         {
             _hideTimer = float.MaxValue;
+            _targetAlpha = 1f;
         }
     }
 
@@ -333,18 +357,15 @@ public class EnemyStatusUI : MonoBehaviour
     /// </summary>
     private void HideStatusImmediate()
     {
-        if (canvasGroup == null)
-        {
-            return;
-        }
-
+        if (canvasGroup == null) return;
         if (alwaysVisible)
         {
             canvasGroup.alpha = 1f;
+            _targetAlpha = 1f;
             return;
         }
-
         canvasGroup.alpha = 0f;
+        _targetAlpha = 0f;
         _hideTimer = 0f;
     }
 
@@ -354,11 +375,7 @@ public class EnemyStatusUI : MonoBehaviour
     /// <param name="message">要显示的提示信息</param>
     private void ShowTooltip(string message)
     {
-        if (tooltipText == null)
-        {
-            return;
-        }
-
+        if (tooltipText == null) return;
         tooltipText.text = message;
         tooltipText.gameObject.SetActive(true);
         _isForcedVisible = true;
@@ -370,11 +387,7 @@ public class EnemyStatusUI : MonoBehaviour
     /// </summary>
     private void HideTooltip()
     {
-        if (tooltipText == null)
-        {
-            return;
-        }
-
+        if (tooltipText == null) return;
         tooltipText.gameObject.SetActive(false);
         _isForcedVisible = false;
     }
@@ -384,17 +397,35 @@ public class EnemyStatusUI : MonoBehaviour
     /// </summary>
     private void AcquireCamera()
     {
-        if (_camera != null)
-        {
-            return;
-        }
-
+        if (_camera != null) return;
         if (GameplayCameraProvider.TryGetGameplayCamera(out Camera gameplayCamera))
         {
             _camera = gameplayCamera;
             return;
         }
-
         _camera = Camera.main;
+    }
+
+    private void HideStatus()
+    {
+        if (canvasGroup == null) return;
+        if (alwaysVisible)
+        {
+            _targetAlpha = 1f;
+            return;
+        }
+        _targetAlpha = 0f;
+        _hideTimer = 0f;
+    }
+
+    private void UpdateFade()
+    {
+        if (canvasGroup == null) return;
+        float current = canvasGroup.alpha;
+        float target = _targetAlpha;
+        if (Mathf.Approximately(current, target)) return;
+        float duration = target > current ? Mathf.Max(0.0001f, fadeInDuration) : Mathf.Max(0.0001f, fadeOutDuration);
+        float step = Time.deltaTime / duration;
+        canvasGroup.alpha = Mathf.MoveTowards(current, target, step);
     }
 }

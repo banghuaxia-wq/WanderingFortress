@@ -8,8 +8,9 @@ namespace WF.Gameplay
         public GameObject Creator;
         public GameObject Target;
         public float DurationTimer;
-        public float TickTimer;
         public int CurStack;
+        public float ExtraValue;
+        public int ElapsedSeconds;
 
         public BuffRunTimeInfo(BuffData data, GameObject creator, GameObject target)
         {
@@ -18,8 +19,8 @@ namespace WF.Gameplay
             Target = target;
             CurStack = 1;
             DurationTimer = data.IsForever ? float.PositiveInfinity : data.Duration;
-            TickTimer = data.TickInterval;
+            ExtraValue = 0f;
+            ElapsedSeconds = 0;
         }
     }
 }
-

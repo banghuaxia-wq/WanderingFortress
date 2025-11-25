@@ -1,18 +1,18 @@
 using UnityEngine;
+using WF.Gameplay;
 
 /// <summary>
 /// 控制子弹的飞行、碰撞和销毁逻辑。
 /// </summary>
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
-public class BulletProjectile : MonoBehaviour
+public class Projectile : MonoBehaviour
 {
     // 移动方向向量的最小平方长度，用于避免零向量问题
     private const float MinDirectionSqrMagnitude = 0.0001f;
 
     [Tooltip("可以被子弹击中的层")]
     [SerializeField] private LayerMask hitMask;
-    [Tooltip("是否自动配置刚体和碰撞体以用于触发器模式")]
     [SerializeField] private bool autoConfigurePhysics = true;
     [Tooltip("子弹击中环境后是否销毁")]
     [SerializeField] private bool destroyOnEnvironmentHit = true;
@@ -22,9 +22,7 @@ public class BulletProjectile : MonoBehaviour
     // 子弹的生命周期（秒）
     private float _lifetime;
     // 子弹的伤害值
-    private float _damage;
-    // 子弹的眩晕值
-    private float _stun;
+    private DamageInfo _payload;
     // 子弹的飞行方向
     private Vector3 _direction;
     // 子弹的生命周期计时器
@@ -33,6 +31,9 @@ public class BulletProjectile : MonoBehaviour
     private Rigidbody _rigidbody;
     // 子弹的碰撞体组件
     private Collider _collider;
+    public enum ProjectileBehaviorType { Damage, Capture, Recall }
+    [SerializeField] private ProjectileBehaviorType behavior = ProjectileBehaviorType.Damage;
+    [SerializeField] private float captureLevel = 1f;
 
     /// <summary>
     /// 初始化组件引用并根据设置配置物理属性。
@@ -65,12 +66,11 @@ public class BulletProjectile : MonoBehaviour
     /// <param name="damage">伤害值</param>
     /// <param name="stun">眩晕值</param>
     /// <param name="direction">飞行方向</param>
-    public void Initialize(float speed, float lifetime, float damage, float stun, Vector3 direction)
+    public void Initialize(float speed, float lifetime, Vector3 direction, DamageInfo payload)
     {
         _speed = speed;
         _lifetime = lifetime;
-        _damage = damage;
-        _stun = stun;
+        _payload = payload;
         _direction = direction.normalized;
         _lifeTimer = 0f;
         transform.forward = _direction;
@@ -83,7 +83,7 @@ public class BulletProjectile : MonoBehaviour
     {
         if (_direction.sqrMagnitude < MinDirectionSqrMagnitude)
         {
-            Destroy(gameObject);
+            ReturnToPool();
             return;
         }
 
@@ -93,7 +93,7 @@ public class BulletProjectile : MonoBehaviour
 
         if (_lifeTimer >= _lifetime)
         {
-            Destroy(gameObject);
+            ReturnToPool();
         }
     }
 
@@ -108,24 +108,41 @@ public class BulletProjectile : MonoBehaviour
             return;
         }
 
-        if (other.TryGetComponent(out EnemyCombatController enemyCombat))
+        switch (behavior)
         {
-            enemyCombat.ReceiveProjectileHit(_damage, _stun);
-            Destroy(gameObject);
-            return;
-        }
-
-        EnemyCombatController enemyFromParent = other.GetComponentInParent<EnemyCombatController>();
-        if (enemyFromParent != null)
-        {
-            enemyFromParent.ReceiveProjectileHit(_damage, _stun);
-            Destroy(gameObject);
-            return;
+            case ProjectileBehaviorType.Damage:
+                var dmg = other.GetComponent<IDamageable>() ?? other.GetComponentInParent<IDamageable>();
+                if (dmg != null)
+                {
+                    dmg.TakeDamage(_payload);
+                    ReturnToPool();
+                    return;
+                }
+                break;
+            case ProjectileBehaviorType.Capture:
+                var cap = other.GetComponent<ICapturable>() ?? other.GetComponentInParent<ICapturable>();
+                if (cap != null)
+                {
+                    cap.TryCapture(captureLevel);
+                    ReturnToPool();
+                    return;
+                }
+                break;
+            case ProjectileBehaviorType.Recall:
+                var rec = other.GetComponent<IRecallable>() ?? other.GetComponentInParent<IRecallable>();
+                if (rec != null)
+                {
+                    GameObject caller = _payload != null ? _payload.Source : gameObject;
+                    rec.Recall(caller);
+                    ReturnToPool();
+                    return;
+                }
+                break;
         }
 
         if (destroyOnEnvironmentHit)
         {
-            Destroy(gameObject);
+            ReturnToPool();
         }
     }
 
@@ -142,6 +159,20 @@ public class BulletProjectile : MonoBehaviour
         }
 
         return (hitMask & (1 << objectLayer)) != 0;
+    }
+
+    private void ReturnToPool()
+    {
+        var po = GetComponent<WF.Gameplay.PooledObject>();
+        if (po != null)
+        {
+            po.ReturnToPool();
+        }
+        else
+        {
+            gameObject.SetActive(false);
+            Destroy(gameObject);
+        }
     }
 }
 

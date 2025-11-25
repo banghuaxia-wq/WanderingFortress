@@ -14,6 +14,7 @@ public class CrosshairController : MonoBehaviour
     [SerializeField] private Canvas parentCanvas;
     [Tooltip("是否在游戏时隐藏系统光标。")]
     [SerializeField] private bool hideSystemCursor = true;
+    [SerializeField] private Vector2 externalOffset;
 
     // 缓存的游戏主摄像机。
     private Camera _gameplayCamera;
@@ -73,13 +74,16 @@ public class CrosshairController : MonoBehaviour
 
         if (parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
         {
-            crosshairRect.position = Input.mousePosition;
+            Vector3 p = Input.mousePosition;
+            p.x += externalOffset.x;
+            p.y += externalOffset.y;
+            crosshairRect.position = p;
         }
         else
         {
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 parentCanvas.transform as RectTransform,
-                Input.mousePosition,
+                new Vector2(Input.mousePosition.x + externalOffset.x, Input.mousePosition.y + externalOffset.y),
                 parentCanvas.worldCamera,
                 out Vector2 localPoint);
 
@@ -139,6 +143,11 @@ public class CrosshairController : MonoBehaviour
         {
             parentCanvas.worldCamera = _gameplayCamera;
         }
+    }
+
+    public void SetExternalOffset(Vector2 offset)
+    {
+        externalOffset = offset;
     }
 }
 

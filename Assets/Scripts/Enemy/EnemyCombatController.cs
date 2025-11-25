@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// 控制敌人的战斗行为，包括生命值、眩晕、驯服和状态转换。
 /// </summary>
-public class EnemyCombatController : MonoBehaviour
+public class EnemyCombatController : MonoBehaviour, WF.Gameplay.IDamageable, WF.Gameplay.IPoolable
 {
     // 玩家对象的标签
     private const string PlayerTag = "Player";
@@ -32,11 +32,7 @@ public class EnemyCombatController : MonoBehaviour
     [SerializeField] private Transform playerTransform;
     [Tooltip("敌人的刚体组件")]
     [SerializeField] private Rigidbody enemyRigidbody;
-    [Tooltip("敌人的材质控制器")]
-    [SerializeField] private EnemyMaterialController materialController;
-    //TODO:写在manager里面
-    [Tooltip("盟友跟随控制器")]
-    [SerializeField] private AllyFollower allyFollower;
+    
     [Tooltip("是否启用调试日志")]
     [SerializeField] private bool enableDebugLogs = false;
 
@@ -58,6 +54,8 @@ public class EnemyCombatController : MonoBehaviour
     private float _currentStun;
     // 驯服范围的平方，用于优化距离计算
     private float _cachedTameRangeSqr;
+    private bool _stunDecayBlocked;
+    private WF.Gameplay.BuffManager _buffManager;
 
     // -- 事件定义 --
     /// <summary>
@@ -117,15 +115,7 @@ public class EnemyCombatController : MonoBehaviour
             enemyRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
         }
 
-        if (materialController == null)
-        {
-            materialController = GetComponent<EnemyMaterialController>();
-        }
-
-        if (allyFollower == null)
-        {
-            allyFollower = GetComponent<AllyFollower>();
-        }
+        
 
         var capsule = GetComponent<CapsuleCollider>();
         if (capsule != null)
@@ -146,6 +136,8 @@ public class EnemyCombatController : MonoBehaviour
         {
             Debug.LogError("Enemy stats asset is not assigned.", this);
         }
+
+        _buffManager = GetComponent<WF.Gameplay.BuffManager>();
     }
 
     /// <summary>
@@ -203,15 +195,7 @@ public class EnemyCombatController : MonoBehaviour
         OnHealthChanged?.Invoke(_currentHealth, hatchStats.MaxHealth);
         OnStunChanged?.Invoke(_currentStun, hatchStats.MaxStunValue);
 
-        if (materialController != null)
-        {
-            materialController.ApplyDefaultMaterial();
-        }
-
-        if (allyFollower != null)
-        {
-            allyFollower.DeactivateFollow();
-        }
+        
 
         LogStateDebug("初始化");
     }
@@ -253,6 +237,64 @@ public class EnemyCombatController : MonoBehaviour
         LogStateDebug("受击后");
     }
 
+    public void TakeDamage(WF.Gameplay.DamageInfo info)
+    {
+        if (_currentState == EnemyState.Ally || hatchStats == null) return;
+        float damageAmount = info != null ? Mathf.Max(MinValue, info.Damage) : MinValue;
+        float stunGain = info != null ? Mathf.Max(MinValue, info.InstantStun) : MinValue;
+        _currentHealth = Mathf.Max(MinValue, _currentHealth - damageAmount);
+        _currentStun = Mathf.Min(hatchStats.MaxStunValue, _currentStun + stunGain);
+        if (info != null && info.AppliedBuffs != null)
+        {
+            var bm = _buffManager;
+            if (bm == null) bm = GetComponent<WF.Gameplay.BuffManager>();
+            if (bm != null)
+            {
+                for (int i = 0; i < info.AppliedBuffs.Count; i++)
+                {
+                    var ab = info.AppliedBuffs[i];
+                    if (ab.Buff != null && ab.ExtraValue > 0f)
+                    {
+                        bm.AddBuff(ab.Buff, info.Source != null ? info.Source : gameObject, ab.ExtraValue);
+                    }
+                }
+            }
+        }
+        OnShowStatus?.Invoke();
+        OnHealthChanged?.Invoke(_currentHealth, hatchStats.MaxHealth);
+        OnStunChanged?.Invoke(_currentStun, hatchStats.MaxStunValue);
+        if (_currentStun >= hatchStats.MaxStunValue && _currentState != EnemyState.Stunned)
+        {
+            EnterStunnedState();
+        }
+        if (_currentHealth <= MinValue && _currentState != EnemyState.Ally)
+        {
+            HandleDefeat();
+        }
+        LogStateDebug("接口受击");
+    }
+
+    public void OnRecycle()
+    {
+        StopMovementImmediate();
+        if (hatchStats != null)
+        {
+            _currentHealth = hatchStats.MaxHealth;
+            _currentStun = MinValue;
+        }
+        _currentState = EnemyState.Active;
+        _stunDecayBlocked = false;
+        var bm = _buffManager != null ? _buffManager : GetComponent<WF.Gameplay.BuffManager>();
+        if (bm != null)
+        {
+            for (int i = bm.buffs.Count - 1; i >= 0; i--)
+            {
+                var data = bm.buffs[i].BuffData;
+                if (data != null && !string.IsNullOrEmpty(data.Id)) bm.RemoveBuff(data.Id);
+            }
+        }
+    }
+
     public void ReceiveBuffDamage(float damageAmount)
     {
         if (_currentState == EnemyState.Ally || hatchStats == null)
@@ -274,13 +316,19 @@ public class EnemyCombatController : MonoBehaviour
     /// </summary>
     private void UpdateStunDecay()
     {
-        if (_currentStun <= MinValue || hatchStats == null)
+        if (hatchStats == null) return;
+
+        float dt = Time.deltaTime;
+        if (hatchStats.stunAutoIncreaseRate > 0f)
         {
-            return;
+            _currentStun = Mathf.Min(hatchStats.MaxStunValue, _currentStun + hatchStats.stunAutoIncreaseRate * dt);
         }
 
-        _currentStun = Mathf.Max(MinValue, _currentStun - hatchStats.StunDecayRate * Time.deltaTime);
-        
+        if (!_stunDecayBlocked && _currentStun > MinValue && hatchStats.stunDecayRate > 0f)
+        {
+            _currentStun = Mathf.Max(MinValue, _currentStun - hatchStats.stunDecayRate * dt);
+        }
+
         OnStunChanged?.Invoke(_currentStun, hatchStats.MaxStunValue);
     }
 
@@ -348,15 +396,7 @@ public class EnemyCombatController : MonoBehaviour
         OnHealthChanged?.Invoke(_currentHealth, hatchStats.MaxHealth);
         OnStunChanged?.Invoke(_currentStun, hatchStats.MaxStunValue);
 
-        if (materialController != null)
-        {
-            materialController.ApplyAllyMaterial();
-        }
-
-        if (allyFollower != null && playerTransform != null)
-        {
-            allyFollower.ActivateFollow(playerTransform);
-        }
+        
 
         if (enableDebugLogs)
         {
@@ -378,6 +418,11 @@ public class EnemyCombatController : MonoBehaviour
         OnTooltipChanged?.Invoke("敌人倒下", true);
 
         LogStateDebug("生命耗尽");
+    }
+
+    public void SetStunDecayBlocked(bool blocked)
+    {
+        _stunDecayBlocked = blocked;
     }
 
     /// <summary>

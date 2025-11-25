@@ -1,4 +1,5 @@
 using UnityEngine;
+using WF.Gameplay;
 
 /// <summary>
 /// 使用 ScriptableObject 定义子弹的基础属性，方便在编辑器中创建和配置不同类型的子弹。
@@ -36,4 +37,8 @@ public class SOBullet : ScriptableObject
     /// </summary>
     [Tooltip("子弹的预制体（GameObject），用于实例化。")]
     public GameObject Prefab; 
+
+    [Header("Stun Settings")]
+    [Tooltip("用于延迟眩晕的麻药 Buff 资产（需要包含 SedativeStun 模块）")]
+    public BuffData SedativeBuffData;
 }

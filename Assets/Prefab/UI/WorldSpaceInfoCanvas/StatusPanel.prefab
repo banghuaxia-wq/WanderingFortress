@@ -458,9 +458,11 @@ MonoBehaviour:
   stunSlider: {fileID: 8155658503957175689}
   tooltipText: {fileID: 0}
   worldOffset: {x: 0, y: 2.2, z: 0}
-  hideDelay: 3
+  hideDelay: 1
   canvasGroup: {fileID: 1290294238072216712}
   alwaysVisible: 0
+  fadeInDuration: 0.2
+  fadeOutDuration: 0.2
 --- !u!1 &5894393605738264642
 GameObject:
   m_ObjectHideFlags: 0

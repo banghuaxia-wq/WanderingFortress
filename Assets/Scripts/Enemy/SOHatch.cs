@@ -41,6 +41,9 @@ public class ScriptableHatch : ScriptableObject
     [Tooltip("眩晕值随时间自动下降的速度（每秒）")]
     public float stunDecayRate = 10f;
 
+    [Tooltip("眩晕值随时间自动上涨的速度（每秒）")]
+    public float stunAutoIncreaseRate = 0f;
+
     [Header("移动与攻击参数")]
     [Tooltip("移动速度（单位/秒）")]
     public float moveSpeed = 3.5f;

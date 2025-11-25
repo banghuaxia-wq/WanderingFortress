@@ -17,3 +17,4 @@ MonoBehaviour:
   Speed: 50
   Lifetime: 2
   Prefab: {fileID: 154440530695813302, guid: 361c3cf0f81b89c4c925f847a32cd8cc, type: 3}
+  SedativeBuffData: {fileID: 11400000, guid: 4bf043873ffd62c40983d86369101a49, type: 2}

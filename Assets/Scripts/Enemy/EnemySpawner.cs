@@ -82,7 +82,22 @@ public class EnemySpawner : MonoBehaviour
         }
 
         GameObject prefabToSpawn = GetRandomEnemyPrefab();
-        GameObject enemyInstance = Instantiate(prefabToSpawn, spawnPoint.position, prefabToSpawn.transform.rotation);
+        GameObject enemyInstance = null;
+        if (WF.Gameplay.PoolManager.Instance != null)
+        {
+            enemyInstance = WF.Gameplay.PoolManager.Instance.Get(prefabToSpawn, spawnPoint.position, spawnPoint.rotation);
+        }
+        if (enemyInstance == null)
+        {
+            enemyInstance = Instantiate(prefabToSpawn, spawnPoint.position, spawnPoint.rotation);
+            var po = enemyInstance.GetComponent<WF.Gameplay.PooledObject>();
+            if (po == null) po = enemyInstance.AddComponent<WF.Gameplay.PooledObject>();
+            po.SourcePrefab = prefabToSpawn;
+        }
+        if (enemyInstance.GetComponent<WF.Gameplay.BuffManager>() == null)
+        {
+            enemyInstance.AddComponent<WF.Gameplay.BuffManager>();
+        }
         EnemyCombatController combatController = enemyInstance.GetComponent<EnemyCombatController>();
 
         if (combatController == null)
@@ -92,7 +107,28 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        EnemyStatusUI uiInstance = Instantiate(statusUIPrefab, uiParent);
+        EnemyStatusUI uiInstance = null;
+        GameObject uiGO = null;
+        if (WF.Gameplay.PoolManager.Instance != null && statusUIPrefab != null)
+        {
+            uiGO = WF.Gameplay.PoolManager.Instance.Get(statusUIPrefab.gameObject, Vector3.zero, Quaternion.identity, uiParent);
+            if (uiGO != null)
+            {
+                uiInstance = uiGO.GetComponent<EnemyStatusUI>();
+                if (uiInstance == null)
+                {
+                    uiInstance = uiGO.AddComponent<EnemyStatusUI>();
+                }
+            }
+        }
+        if (uiInstance == null)
+        {
+            uiInstance = Instantiate(statusUIPrefab, uiParent);
+            var po = uiInstance.gameObject.GetComponent<WF.Gameplay.PooledObject>();
+            if (po == null) po = uiInstance.gameObject.AddComponent<WF.Gameplay.PooledObject>();
+            po.SourcePrefab = statusUIPrefab.gameObject;
+            uiGO = uiInstance.gameObject;
+        }
 
         uiInstance.Initialize(combatController);
 
@@ -102,6 +138,25 @@ public class EnemySpawner : MonoBehaviour
             if (_occupiedPoints.ContainsKey(spawnPoint))
             {
                 _occupiedPoints.Remove(spawnPoint);
+            }
+            if (WF.Gameplay.PoolManager.Instance != null)
+            {
+                WF.Gameplay.PoolManager.Instance.Release(enemyInstance);
+            }
+            else
+            {
+                Destroy(enemyInstance);
+            }
+            if (uiGO != null)
+            {
+                if (WF.Gameplay.PoolManager.Instance != null)
+                {
+                    WF.Gameplay.PoolManager.Instance.Release(uiGO);
+                }
+                else
+                {
+                    Destroy(uiGO);
+                }
             }
         };
     }

@@ -16,10 +16,8 @@ namespace WF.Gameplay
         public int MaxStack = 1;
         public float Duration = 5f;
         public bool IsForever = false;
-        public float TickInterval = 0f;
         public BuffUpdateEnum UpdateStrategy = BuffUpdateEnum.RefreshAndAddStack;
         public BuffRemoveEnum RemoveStrategy = BuffRemoveEnum.RemoveAll;
         public List<BuffModule> BuffModules = new List<BuffModule>();
     }
 }
-

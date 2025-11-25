@@ -14,14 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hatchName: "\u706B\u9F99\u679C\u523A\u732C"
   type: 0
-  modelPrefab: {fileID: 6303268247495337517, guid: edc08f82dac5e124ab27f55a62f62dfa,
+  modelPrefab: {fileID: 6600819880016947899, guid: edc08f82dac5e124ab27f55a62f62dfa,
     type: 3}
   preferredItem: {fileID: 0}
   tameCost: 1
   tameMethod: 0
-  maxHealth: 30
-  maxStun: 40
-  stunDecayRate: 10
+  maxHealth: 100
+  maxStun: 50
+  stunDecayRate: 1
+  stunAutoIncreaseRate: 0
   moveSpeed: 3.5
   attackRange: 8
   attackInterval: 2.5
