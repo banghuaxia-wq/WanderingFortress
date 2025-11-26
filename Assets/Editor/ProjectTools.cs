@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using System.IO;
 
 /// <summary>
 /// 简易项目工具：在 Unity 菜单中提供“重新生成 C# 项目文件”。
@@ -45,5 +46,43 @@ public static class ProjectTools
             EditorUtility.ClearProgressBar();
         }
     }
-}
 
+    [MenuItem("Tools/Normalize Line Endings (Windows)", priority = 11)]
+    public static void NormalizeSelectedFilesToWindows()
+    {
+        var guids = Selection.assetGUIDs;
+        if (guids == null || guids.Length == 0)
+        {
+            Debug.LogWarning("[Tools] No assets selected. Select text assets (e.g., .shader) to normalize.");
+            return;
+        }
+        try
+        {
+            EditorUtility.DisplayProgressBar("Normalize Line Endings", "Processing selected assets...", 0.2f);
+            foreach (var guid in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (string.IsNullOrEmpty(path)) continue;
+                var ext = Path.GetExtension(path).ToLowerInvariant();
+                // Process common text-based assets
+                if (ext == ".shader" || ext == ".cginc" || ext == ".txt" || ext == ".cs" || ext == ".json" || ext == ".xml" || ext == ".uxml" || ext == ".uss")
+                {
+                    var fullPath = Path.Combine(Directory.GetCurrentDirectory(), path.Replace('/', Path.DirectorySeparatorChar));
+                    if (!File.Exists(fullPath)) continue;
+                    var content = File.ReadAllText(fullPath);
+                    // Normalize to Windows CRLF
+                    content = content.Replace("\r\n", "\n");
+                    content = content.Replace("\r", "\n");
+                    content = content.Replace("\n", "\r\n");
+                    File.WriteAllText(fullPath, content);
+                    Debug.Log($"[Tools] Normalized line endings: {path}");
+                }
+            }
+            AssetDatabase.Refresh();
+        }
+        finally
+        {
+            EditorUtility.ClearProgressBar();
+        }
+    }
+}
