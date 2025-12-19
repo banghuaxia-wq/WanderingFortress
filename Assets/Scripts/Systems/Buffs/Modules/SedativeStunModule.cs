@@ -1,7 +1,7 @@
 using UnityEngine;
 
 using WF.Gameplay.Core.Data;
-using WF.Gameplay.Systems.Enemy;
+using WF.Gameplay.Systems.Pochie;
 
 namespace WF.Gameplay.Systems.Buffs
 {
@@ -11,12 +11,12 @@ namespace WF.Gameplay.Systems.Buffs
         public override void Execute(BuffRunTimeInfo info, BuffManager manager)
         {
             if (info == null || info.Target == null) return;
-            var enemy = info.Target.GetComponent<EnemyCombatController>();
-            if (enemy == null) return;
+            var pochie = info.Target.GetComponent<PochieCombatController>();
+            if (pochie == null) return;
 
             if (callback == BuffCallback.OnCreate || callback == BuffCallback.OnAddStack)
             {
-                enemy.SetStunDecayBlocked(true);
+                pochie.SetStunDecayBlocked(true);
                 return;
             }
             if (callback == BuffCallback.OnReduceStack)
@@ -24,13 +24,13 @@ namespace WF.Gameplay.Systems.Buffs
                 int stack = Mathf.Max(0, info.CurStack);
                 if (stack <= 0)
                 {
-                    enemy.SetStunDecayBlocked(false);
+                    pochie.SetStunDecayBlocked(false);
                 }
                 return;
             }
             if (callback == BuffCallback.OnRemove)
             {
-                enemy.SetStunDecayBlocked(false);
+                pochie.SetStunDecayBlocked(false);
                 return;
             }
             if (callback == BuffCallback.OnTick)
@@ -41,7 +41,7 @@ namespace WF.Gameplay.Systems.Buffs
                 int stack = Mathf.Max(1, info.CurStack);
                 float amount = perSecondBase * stack;
                 var di = new DamageInfo { Source = manager.gameObject, Damage = 0f, InstantStun = amount, Type = DamageType.Physical };
-                enemy.TakeDamage(di);
+                pochie.TakeDamage(di);
                 if (manager != null && manager.IsLogEnabled)
                 {
                     Debug.Log($"[BuffTick] {info.BuffData?.BuffName ?? info.BuffData?.Id} sec={info.ElapsedSeconds} apply={amount:0.##} stack={stack}", manager);

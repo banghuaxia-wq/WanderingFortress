@@ -9,17 +9,17 @@
   - 基础属性：生命值、体力值、饥饿值、负重值。
   - 环境抗性：低温抗性、高温抗性。与当前环境温度实时计算，若抗性不足，则施加对应的环境 Debuff（如：冻伤-持续掉血、体力消耗加快；中暑-水分加速消耗、视野模糊）。
   - Buff/Debuff 系统：一个独立的状态管理系统，用于管理所有临时效果。
-    - 来源包括：环境、哈奇、食物、药物等。
+    - 来源包括：环境、Pochie、食物、药物等。
     - 效果可叠加、可刷新时长。
     - 每个效果包含：唯一 ID、图标、描述、持续时间、效果逻辑（如：速度提升 20%）。
 
-## 二、哈奇驯服系统（细化版）
+## 二、Pochie驯服系统（细化版）
 ### 驯服前置条件与流程
 1. 发现与侦察
-   - 玩家靠近一个可驯服的哈奇（无论是打晕后的还是和平驯服类型的）。
-   - 此时，哈奇身上会自动浮现一个交互 Tooltip UI。
+   - 玩家靠近一个可驯服的Pochie（无论是打晕后的还是和平驯服类型的）。
+   - 此时，Pochie身上会自动浮现一个交互 Tooltip UI。
 2. 交互 Tooltip UI 内容
-   - 哈奇头像与名称（如：火龙果刺猬）。
+   - Pochie头像与名称（如：火龙果刺猬）。
    - 所需物品：显示其最喜爱的物品图标（如：奶皮子糖葫芦）。
    - 数量需求：显示为 当前背包拥有数量 / 驯服所需数量（如：1/3）。
    - 状态指示：
@@ -28,12 +28,12 @@
 3. 执行驯服
    - 只有当 Tooltip 为高亮可交互状态时，玩家才能按下交互键（E）。
    - 按下后，直接从玩家背包中扣除所需数量的特定物品。
-   - 播放一个简短的驯服成功动画（如光芒融入哈奇身体）。
-   - 驯服成功后，自动使用一个空灵魂球，将该哈奇收纳入库。
+   - 播放一个简短的驯服成功动画（如光芒融入Pochie身体）。
+   - 驯服成功后，自动使用一个空灵魂球，将该Pochie收纳入库。
 
 ### 数据结构与配置
-1. 哈奇数据表（`HatchData_SO`）
-   - `hatchID`: 唯一标识符
+1. Pochie数据表（`PochieData_SO`）
+   - `pochieID`: 唯一标识符
    - `displayName`: 显示名称（火龙果刺猬）
    - `preferredItemID`: 最喜爱物品的 ID（链接到物品表）
    - `tameCost`: 驯服所需该物品的数量
@@ -45,15 +45,15 @@
 
 ### 系统工作流程（伪代码）
 ```csharp
-// 当玩家进入哈奇的触发范围内
-OnPlayerEnterTrigger(Hatch hatch):
-    // 1. 获取此哈奇的驯服信息
-    ItemData preferredItem = hatch.Data.preferredItem;
-    int cost = hatch.Data.tameCost;
+// 当玩家进入Pochie的触发范围内
+OnPlayerEnterTrigger(Pochie pochie):
+    // 1. 获取此Pochie的驯服信息
+    ItemData preferredItem = pochie.Data.preferredItem;
+    int cost = pochie.Data.tameCost;
     // 2. 查询玩家背包
     int playerInventoryCount = player.Inventory.GetItemCount(preferredItem.itemID);
     // 3. 更新并显示 Tooltip
-    UI_Tooltip.Show(hatch, preferredItem, playerInventoryCount, cost);
+    UI_Tooltip.Show(pochie, preferredItem, playerInventoryCount, cost);
     // 4. 设置交互状态
     if (playerInventoryCount >= cost) {
         UI_Tooltip.SetInteractable(true); // 高亮
@@ -68,10 +68,10 @@ OnPlayerInteract():
         if (player.Inventory.GetItemCount(preferredItem.itemID) >= cost):
             // 执行驯服
             player.Inventory.RemoveItem(preferredItem.itemID, cost); // 消耗物品
-            hatch.PlayTameAnimation();
+            pochie.PlayTameAnimation();
             player.Inventory.UseEmptySoulOrb(); // 消耗一个空灵魂球
-            player.HatchCollection.Add(hatch.Data); // 哈奇入库
-            hatch.Despawn(); // 移除场景中的野生哈奇
+            player.PochieCollection.Add(pochie.Data); // Pochie入库
+            pochie.Despawn(); // 移除场景中的野生Pochie
 ```
 
 ## 三、战斗系统

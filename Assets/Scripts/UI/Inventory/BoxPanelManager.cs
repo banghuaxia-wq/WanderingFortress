@@ -1,6 +1,6 @@
 using UnityEngine;
 using WF.Gameplay.Systems.ContainerSystem;
-using WF.Gameplay.Systems.EventSystem;
+using WF.Gameplay.Core.Events;
 using WF.Gameplay.Core.Data;
 
 namespace WF.Gameplay.UI.Inventory
@@ -11,10 +11,11 @@ namespace WF.Gameplay.UI.Inventory
         [SerializeField] private GameObject slotPrefab;
         [SerializeField] private UISlotPoolManager slotPool;
         [SerializeField] private string currentContainerId;
+        
         private void OnEnable()
         {
-            GameEvents.ContainerOpened += OnOpened;
-            GameEvents.ContainerUpdated += OnUpdated;
+            EventBus.Subscribe<ContainerOpenedEvent>(OnOpened);
+            EventBus.Subscribe<ContainerUpdatedEvent>(OnUpdated);
             var cm = ContainerManager.Instance;
             if (cm != null && cm.CurrentOpened != null)
             {
@@ -22,10 +23,18 @@ namespace WF.Gameplay.UI.Inventory
                 Render(cm.CurrentOpened);
             }
         }
-        private void OnDisable() { GameEvents.ContainerOpened -= OnOpened; GameEvents.ContainerUpdated -= OnUpdated; }
+        
+        private void OnDisable() 
+        { 
+            EventBus.Unsubscribe<ContainerOpenedEvent>(OnOpened); 
+            EventBus.Unsubscribe<ContainerUpdatedEvent>(OnUpdated); 
+        }
+        
         public void Open(string id) { currentContainerId = id; var d = ContainerManager.Instance?.Get(id); if (d != null) Render(d); }
-        private void OnOpened(ContainerData d) { if (d == null) return; currentContainerId = d.Id; Render(d); }
-        private void OnUpdated(ContainerData d) { if (d == null) return; if (d.Id == currentContainerId) Render(d); }
+        
+        private void OnOpened(ContainerOpenedEvent e) { var d = e.Data; if (d == null) return; currentContainerId = d.Id; Render(d); }
+        private void OnUpdated(ContainerUpdatedEvent e) { var d = e.Data; if (d == null) return; if (d.Id == currentContainerId) Render(d); }
+        
         private void Render(ContainerData d)
         {
             if (content == null || slotPrefab == null || slotPool == null) return;

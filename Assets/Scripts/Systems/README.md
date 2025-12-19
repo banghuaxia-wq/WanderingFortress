@@ -15,11 +15,12 @@
 | `PlayerMove.cs` | `PlayerMove` | 玩家移动和旋转控制 |
 | `PlayerShooter.cs` | `PlayerShooter` | 玩家射击行为控制 |
 
-### Enemy/
+### Pochie/
 | 脚本文件 | 核心类名 | 职责描述 |
 |:---|:---|:---|
-| `EnemyCombatController.cs` | `EnemyCombatController` | 敌人战斗逻辑，实现IDamageable接口 |
-| `EnemySpawner.cs` | `EnemySpawner` | 敌人生成器，管理生成点和状态UI绑定 |
+| `PochieCombatController.cs` | `PochieCombatController` | Pochie战斗逻辑，实现IDamageable接口 |
+| `PochieSpawner.cs` | `PochieSpawner` | Pochie生成器，管理生成点和状态UI绑定 |
+| `PochieFactory.cs` | `PochieFactory` | Pochie工厂：从数据或预制体创建并初始化实体 |
 
 ### Buffs/
 | 脚本文件 | 核心类名 | 职责描述 |
@@ -31,7 +32,7 @@
 | 脚本文件 | 核心类名 | 职责描述 |
 |:---|:---|:---|
 | `ApplySlowMovementByStack.cs` | `ApplySlowMovementByStack` | 按层数减速移动的Buff模块 |
-| `CastDamageToEnemyByStack.cs` | `CastDamageToEnemyByStack` | 按层数造成伤害的Buff模块 |
+| `CastDamageToPochieByStack.cs` | `CastDamageToPochieByStack` | 按层数造成伤害的Buff模块 |
 | `SedativeStunModule.cs` | `SedativeStunModule` | 镇静剂眩晕效果模块 |
 
 ### Camera/
@@ -40,15 +41,6 @@
 | `GameplayCameraProvider.cs` | `GameplayCameraProvider` | 游戏摄像机提供者(单例) |
 | `TopDownCameraFollow.cs` | `TopDownCameraFollow` | 俯视角摄像机跟随控制器 |
 
-### UI/HUD/
-| 脚本文件 | 核心类名 | 职责描述 |
-|:---|:---|:---|
-| `HUDPanelController.cs` | `HUDPanelController` | E打开箱子与背包；I关闭两者或仅切背包；模态禁用操作 |
-
-### EventSystem/
-| 脚本文件 | 核心类名 | 职责描述 |
-|:---|:---|:---|
-| `GameEvents.cs` | `GameEvents` | 全局事件总线：容器/背包/装备/快捷栏/重量/转移 |
 
 ### ContainerSystem/
 | 脚本文件 | 核心类名 | 职责描述 |
@@ -65,6 +57,7 @@
 | `HotbarSystem.cs` | `HotbarSystem` | 快捷栏：槽位设置与事件通知、可用性限制 |
 | `StorageSystem.cs` | `StorageSystem` | 仓库：确保仓库容器存在与初始化 |
 | `WeightBuffSystem.cs` | `WeightBuffSystem` | 重量事件驱动速度倍率（超重/超载） |
+| `InventoryTransferSystem.cs` | `InventoryTransferSystem` | 监听转移请求事件，处理容器到背包的转移 |
 
 ### Interaction/
 | 脚本文件 | 核心类名 | 职责描述 |
@@ -80,8 +73,8 @@
 - **依赖的模块**: `Core/`
 - **对外提供的接口**:
   - `PlayerStateManager.Instance` (单例访问)
-  - `EnemyCombatController.TakeDamage()`
+  - `PochieCombatController.TakeDamage()`
   - `BuffManager.AddBuff()/RemoveBuff()`
-  - `GameEvents.*` 事件派发与订阅接口
+  - `EventBus.*` 事件发布与订阅 (Core/Events)
   - `ContainerManager.Open()/AddItem()/RemoveItem()`
   - `PlayerInventory.Add()/RemoveAt()/GetTotalWeight()`

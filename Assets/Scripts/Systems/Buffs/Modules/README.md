@@ -10,7 +10,7 @@
 | 脚本文件 | 核心类名 | 职责描述 | 回调类型 |
 |:---|:---|:---|:---|
 | `ApplySlowMovementByStack.cs` | `ApplySlowMovementByStack` | 按层数减速移动速度 | OnCreate, OnRemove, OnAddStack |
-| `CastDamageToEnemyByStack.cs` | `CastDamageToEnemyByStack` | 按层数造成持续伤害 | OnTick |
+| `CastDamageToPochieByStack.cs` | `CastDamageToPochieByStack` | 按层数造成持续伤害 | OnTick |
 | `SedativeStunModule.cs` | `SedativeStunModule` | 镇静剂效果，累积眩晕值 | OnTick, OnCreate, OnRemove |
 
 ## 对外接口/依赖

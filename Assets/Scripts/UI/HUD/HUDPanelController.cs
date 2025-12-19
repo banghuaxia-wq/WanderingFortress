@@ -1,5 +1,5 @@
 using UnityEngine;
-using WF.Gameplay.Systems.EventSystem;
+using WF.Gameplay.Core.Events;
 using WF.Gameplay.Systems.Player;
 
 namespace WF.Gameplay.UI.HUD
@@ -10,14 +10,10 @@ namespace WF.Gameplay.UI.HUD
         [SerializeField] private GameObject boxPanel;
         [SerializeField] private KeyCode packageKey = KeyCode.I;
         [SerializeField] private Transform crosshair;
-        private PlayerMove _move;
-        private PlayerShooter _shooter;
         private bool _modalOpen;
 
         private void Awake()
         {
-            _move = FindObjectOfType<PlayerMove>();
-            _shooter = FindObjectOfType<PlayerShooter>();
             if (crosshair == null)
             {
                 var t = transform.Find("crosshair");
@@ -33,13 +29,13 @@ namespace WF.Gameplay.UI.HUD
 
         private void OnEnable()
         {
-            GameEvents.ContainerOpened += OnContainerOpened;
-            GameEvents.ContainerClosed += OnContainerClosed;
+            EventBus.Subscribe<ContainerOpenedEvent>(OnContainerOpened);
+            EventBus.Subscribe<ContainerClosedEvent>(OnContainerClosed);
         }
         private void OnDisable()
         {
-            GameEvents.ContainerOpened -= OnContainerOpened;
-            GameEvents.ContainerClosed -= OnContainerClosed;
+            EventBus.Unsubscribe<ContainerOpenedEvent>(OnContainerOpened);
+            EventBus.Unsubscribe<ContainerClosedEvent>(OnContainerClosed);
         }
 
         private void Update()
@@ -59,12 +55,12 @@ namespace WF.Gameplay.UI.HUD
             }
         }
 
-        private void OnContainerOpened(WF.Gameplay.Core.Data.ContainerData d)
+        private void OnContainerOpened(ContainerOpenedEvent e)
         {
             SetPackage(true);
             SetBox(true);
         }
-        private void OnContainerClosed(WF.Gameplay.Core.Data.ContainerData d)
+        private void OnContainerClosed(ContainerClosedEvent e)
         {
             SetBox(false);
         }
@@ -89,8 +85,8 @@ namespace WF.Gameplay.UI.HUD
             if (crosshair != null) crosshair.gameObject.SetActive(!anyOpen);
             Cursor.visible = anyOpen;
             Cursor.lockState = CursorLockMode.None;
-            if (_move != null) _move.enabled = !anyOpen;
-            if (_shooter != null) _shooter.enabled = !anyOpen;
+            
+            EventBus.Publish(new InputStateChangedEvent(!anyOpen));
         }
     }
 }

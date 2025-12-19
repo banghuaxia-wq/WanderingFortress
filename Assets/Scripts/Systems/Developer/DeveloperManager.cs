@@ -4,9 +4,11 @@ using UnityEngine;
 using WF.Gameplay.Core.Data;
 using WF.Gameplay.Systems.ContainerSystem;
 using WF.Gameplay.Systems.InventorySystem;
-using WF.Gameplay.Systems.EventSystem;
+using WF.Gameplay.Core.Events;
 using WF.Gameplay.Systems.Buffs;
 using WF.Gameplay.Systems.Player;
+using WF.Gameplay.Systems.Inventory;
+using WF.Gameplay.Systems.Inventory.Items;
 
 namespace WF.Gameplay.Systems.Developer
 {
@@ -17,20 +19,21 @@ namespace WF.Gameplay.Systems.Developer
         [SerializeField] private PlayerStats playerStats;
         [SerializeField] private BuffData buffAsset;
 
+        [Header("Pochie Spawn Settings")]
+        [Tooltip("用于测试生成的Pochie数据（SOPochie）")]
+        [SerializeField] private SOPochie devPochieData;
+        [Tooltip("生成位置（为空则使用场景原点）")]
+        [SerializeField] private Transform devSpawnPoint;
+
         [Header("Inventory Item Settings")]
-        [SerializeField] private string invItemId = "DevItem"; // 添加到背包的物品ID
-        [SerializeField] private ItemType invItemType = ItemType.Tool; // 添加到背包的物品类型
-        [SerializeField] private int invItemCount = 1; // 添加到背包的数量
-        [SerializeField] private int invItemMaxStack = 10; // 背包物品最大叠堆
-        [SerializeField] private float invItemWeightPerUnit = 0.2f; // 背包物品单位重量
-        [SerializeField] private bool invItemUsable = false; // 背包物品是否可使用
+        [SerializeField] private ItemBase invItemAsset;
+        [SerializeField] private string invItemId = "DevItem"; // Fallback ID
+        [SerializeField] private int invItemCount = 1;
 
         [Header("Container Item Settings")]
-        [SerializeField] private string boxItemId = "DevItem"; // 添加到容器的物品ID
-        [SerializeField] private ItemType boxItemType = ItemType.Tool; // 添加到容器的物品类型
-        [SerializeField] private int boxItemCount = 1; // 添加到容器的数量
-        [SerializeField] private int boxItemMaxStack = 10; // 容器物品最大叠堆
-        [SerializeField] private float boxItemWeightPerUnit = 0.2f; // 容器物品单位重量
+        [SerializeField] private ItemBase boxItemAsset;
+        [SerializeField] private string boxItemId = "DevItem"; // Fallback ID
+        [SerializeField] private int boxItemCount = 1;
 
         [Header("Save Settings")]
         [SerializeField] private string saveFileName = "save.json";
@@ -39,7 +42,19 @@ namespace WF.Gameplay.Systems.Developer
         public void AddItemToContainer()
         {
             var mgr = ContainerManager.Instance; if (mgr == null) { Debug.LogWarning("ContainerManager not found."); return; }
-            var item = ContainerGenerator.CreateItem(boxItemId, boxItemType, boxItemCount, boxItemMaxStack, boxItemWeightPerUnit);
+            
+            ItemStack item = null;
+            if (boxItemAsset != null)
+            {
+                item = ItemFactory.CreateItemStack(boxItemAsset, boxItemCount);
+            }
+            else
+            {
+                item = ItemFactory.CreateItemStack(boxItemId, boxItemCount);
+            }
+            
+            if (item == null) { Debug.LogWarning("Failed to create item."); return; }
+
             var actor = targetContainerObject != null ? targetContainerObject.GetComponent<WF.Gameplay.Systems.ContainerSystem.ContainerActor>() : null;
             var id = actor != null ? actor.ContainerId : (targetContainerObject != null ? targetContainerObject.name : null);
             if (string.IsNullOrEmpty(id)) { Debug.LogWarning("Target container object not set."); return; }
@@ -50,8 +65,19 @@ namespace WF.Gameplay.Systems.Developer
         public void AddItemToInventory()
         {
             var inv = PlayerInventory.Instance; if (inv == null) { Debug.LogWarning("PlayerInventory not found."); return; }
-            var item = ContainerGenerator.CreateItem(invItemId, invItemType, invItemCount, invItemMaxStack, invItemWeightPerUnit);
-            item.IsUsable = invItemUsable;
+            
+            ItemStack item = null;
+            if (invItemAsset != null)
+            {
+                item = ItemFactory.CreateItemStack(invItemAsset, invItemCount);
+            }
+            else
+            {
+                item = ItemFactory.CreateItemStack(invItemId, invItemCount);
+            }
+            
+            if (item == null) { Debug.LogWarning("Failed to create item."); return; }
+            
             inv.Add(item);
         }
 
@@ -109,17 +135,50 @@ namespace WF.Gameplay.Systems.Developer
             {
                 // 清空并重建（简化）
                 for (int i = inv.Items.Count - 1; i >= 0; i--) inv.RemoveAt(i);
-                if (data.InventoryItems != null) foreach (var it in data.InventoryItems) inv.Add(it);
+                if (data.InventoryItems != null) 
+                {
+                    foreach (var it in data.InventoryItems) 
+                    {
+                        // Re-link IItem reference after deserialization
+                        if (it.Item == null && !string.IsNullOrEmpty(it.ItemId))
+                        {
+                            var resolved = ItemFactory.CreateItemStack(it.ItemId, it.Count);
+                            if (resolved != null) it.Item = resolved.Item;
+                        }
+                        inv.Add(it);
+                    }
+                }
             }
             var mgr = ContainerManager.Instance; if (mgr != null && data.Containers != null)
             {
                 foreach (var c in data.Containers)
                 {
+                    // Re-link IItem references
+                    foreach (var it in c.Items)
+                    {
+                        if (it.Item == null && !string.IsNullOrEmpty(it.ItemId))
+                        {
+                            var resolved = ItemFactory.CreateItemStack(it.ItemId, it.Count);
+                            if (resolved != null) it.Item = resolved.Item;
+                        }
+                    }
                     mgr.Register(c);
-                    GameEvents.RaiseContainerUpdated(c);
+                    EventBus.Publish(new ContainerUpdatedEvent(c));
                 }
             }
             Debug.Log("Loaded save.");
+        }
+
+        [ContextMenu("Spawn Pochie For Test")]
+        public void SpawnPochieForTest()
+        {
+            var pos = devSpawnPoint != null ? devSpawnPoint.position : Vector3.zero;
+            var rot = devSpawnPoint != null ? devSpawnPoint.rotation : Quaternion.identity;
+            var go = WF.Gameplay.Systems.Pochie.PochieFactory.CreateFromDataStatic(devPochieData, pos, rot);
+            if (go == null)
+            {
+                Debug.LogWarning("SpawnPochieForTest 失败：未设置 Pochie 数据 或 工厂不可用。");
+            }
         }
     }
 }

@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using WF.Gameplay.Systems.EventSystem;
+using WF.Gameplay.Core.Events;
 using WF.Gameplay.Core.Data;
+using WF.Gameplay.Core.Interfaces;
 
 namespace WF.Gameplay.UI.Inventory
 {
@@ -17,19 +18,43 @@ namespace WF.Gameplay.UI.Inventory
         private Transform _originalParent; // 拖拽前的父节点（中文注释）
         private int _originalSibling; // 拖拽前的兄弟序号（中文注释）
         private RectTransform _rect; // 本对象RectTransform缓存（中文注释）
+        private IItem _boundItem;
 
         public void Bind(ItemStack stack)
         {
             if (icon == null) icon = transform.Find("Icon")?.GetComponent<Image>();
             if (countText == null) countText = transform.Find("Count")?.GetComponent<Text>();
-            if (stack == null)
+            
+            if (stack == null || stack.Item == null)
             {
                 if (icon != null) icon.enabled = false;
                 if (countText != null) countText.text = "";
+                _boundItem = null;
                 return;
             }
-            if (icon != null) { icon.enabled = true; icon.sprite = stack.Icon; }
-            if (countText != null) countText.text = stack.Count.ToString();
+            
+            _boundItem = stack.Item;
+            if (icon != null) 
+            { 
+                icon.enabled = true; 
+                icon.sprite = stack.Icon; 
+            }
+            if (countText != null) 
+            {
+                countText.text = stack.Count > 1 ? stack.Count.ToString() : "";
+            }
+        }
+        
+        // Overload to support direct IItem binding if needed
+        public void Bind(IItem item, int count)
+        {
+            if (item == null) 
+            {
+                Bind(null);
+                return;
+            }
+            // Create temp stack for display
+            Bind(ItemStack.Create(item, count));
         }
 
         public void SetMeta(TransferSource src, string cid, int idx)
@@ -39,6 +64,8 @@ namespace WF.Gameplay.UI.Inventory
 
         public void OnBeginDrag(PointerEventData eventData)
         {
+            if (_boundItem == null) return;
+
             // 可选：禁用自身射线以便投递到目标
             var cg = GetComponent<CanvasGroup>();
             if (cg == null) cg = gameObject.AddComponent<CanvasGroup>();
@@ -102,7 +129,7 @@ namespace WF.Gameplay.UI.Inventory
                 FromContainerId = srcSlot.containerId,
                 ToContainerId = containerId
             };
-            GameEvents.RaiseTransferRequested(req);
+            EventBus.Publish(new TransferRequestedEvent(req));
         }
     }
 }

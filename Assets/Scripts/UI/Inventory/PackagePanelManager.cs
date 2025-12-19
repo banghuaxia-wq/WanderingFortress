@@ -1,6 +1,6 @@
 using UnityEngine;
 using WF.Gameplay.Systems.InventorySystem;
-using WF.Gameplay.Systems.EventSystem;
+using WF.Gameplay.Core.Events;
 using WF.Gameplay.Core.Data;
 
 namespace WF.Gameplay.UI.Inventory
@@ -10,8 +10,23 @@ namespace WF.Gameplay.UI.Inventory
         [SerializeField] private Transform content;
         [SerializeField] private GameObject slotPrefab;
         [SerializeField] private UISlotPoolManager slotPool;
-        private void OnEnable() { GameEvents.PlayerInventoryUpdated += Refresh; Refresh(); }
-        private void OnDisable() { GameEvents.PlayerInventoryUpdated -= Refresh; }
+        
+        private void OnEnable() 
+        { 
+            EventBus.Subscribe<PlayerInventoryUpdatedEvent>(OnInventoryUpdated); 
+            Refresh(); 
+        }
+        
+        private void OnDisable() 
+        { 
+            EventBus.Unsubscribe<PlayerInventoryUpdatedEvent>(OnInventoryUpdated); 
+        }
+        
+        private void OnInventoryUpdated(PlayerInventoryUpdatedEvent e)
+        {
+            Refresh();
+        }
+        
         private void Refresh()
         {
             if (content == null || slotPrefab == null || slotPool == null) return;

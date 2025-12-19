@@ -41,3 +41,10 @@
 - `Crosshair/` - 准星控制
 
 ## 🔗 依赖规则
+- 严格分层：`Core` → `Systems` → `UI`，不得跨层直接引用非相邻层。
+- 程序集定义隔离：使用 `.asmdef` 强制物理依赖方向（Core 不引用任何层；Systems 仅引用 Core；UI 引用 Core 和 Systems）。
+- 事件总线通信：跨模块交互通过 `EventBus` 的发布/订阅实现，事件定义在 `Core/Events/`。
+- 依赖注入：纯 C# 类使用构造函数注入；`MonoBehaviour` 通过容器属性/方法注入，禁止在 `MonoBehaviour` 使用构造函数。
+- 异步规范：优先使用 `UniTask`，所有异步方法以 `Async` 结尾并接受 `CancellationToken`。
+- 资源管理：禁止硬编码路径，动态资源统一使用 Addressables 或 `AssetReference`。
+- 文档优先：实现前先阅读根与子模块 README；重大变更后更新相关 README 的脚本清单与职责说明。

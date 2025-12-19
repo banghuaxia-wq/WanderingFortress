@@ -59,10 +59,12 @@ public class PlayerMove : MonoBehaviour
     private float _rollTimer;
     private Vector3 _rollDirection;
     private bool _isShooting;
+    private bool _wasSprintingBeforeRoll; // 翻滚前是否处于奔跑（中文注释）
     // 刚体组件的引用
     private Rigidbody _rb;
     // 游戏主摄像机
     private UCamera _gameplayCamera;
+    private bool _inputEnabled = true;
 
     /// <summary>
     /// 初始化组件引用和默认值。
@@ -81,11 +83,37 @@ public class PlayerMove : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        WF.Gameplay.Core.Events.EventBus.Subscribe<WF.Gameplay.Core.Events.InputStateChangedEvent>(OnInputStateChanged);
+    }
+
+    private void OnDisable()
+    {
+        WF.Gameplay.Core.Events.EventBus.Unsubscribe<WF.Gameplay.Core.Events.InputStateChangedEvent>(OnInputStateChanged);
+    }
+
+    private void OnInputStateChanged(WF.Gameplay.Core.Events.InputStateChangedEvent e)
+    {
+        _inputEnabled = e.InputEnabled;
+        if (!_inputEnabled)
+        {
+            // Reset movement state when input is disabled
+            _isMoving = false;
+            _movementInput = Vector3.zero;
+            _isSprinting = false;
+            _isShooting = false;
+            // Note: _rb.velocity will be handled in FixedUpdate, but we might want to stop it here too or let friction stop it
+        }
+    }
+
     /// <summary>
     /// 每帧更新，处理玩家输入和状态切换。
     /// </summary>
     void Update()
     {
+        if (!_inputEnabled) return;
+
         // 1. 获取WASD的输入值
         float horizontalInput = Input.GetAxis("Horizontal"); // A/D
         float verticalInput = Input.GetAxis("Vertical");     // W/S
@@ -162,6 +190,12 @@ public class PlayerMove : MonoBehaviour
             if (_rollTimer <= 0f)
             {
                 _isRolling = false;
+                // 翻滚结束后恢复奔跑状态（若之前在奔跑，仍在移动且允许奔跑）（中文注释）
+                if (_wasSprintingBeforeRoll && _isMoving && (PlayerStateManager.Instance == null || PlayerStateManager.Instance.CanSprint))
+                {
+                    _isSprinting = true;
+                }
+                _wasSprintingBeforeRoll = false;
             }
         }
     }
@@ -265,7 +299,8 @@ public class PlayerMove : MonoBehaviour
         _isRolling = true;
         _rollTimer = rollDuration;
         _rollDirection = direction.normalized;
-        _isSprinting = false;
+        _wasSprintingBeforeRoll = _isSprinting; // 记录翻滚前的奔跑状态（中文注释）
+        _isSprinting = false; // 翻滚期间不标记奔跑以避免错误动画（中文注释）
         if (_animator != null)
         {
             _animator.SetTrigger(RollTriggerHash);

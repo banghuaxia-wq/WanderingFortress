@@ -1,6 +1,6 @@
 using UnityEngine;
 using WF.Gameplay.Core.Data;
-using WF.Gameplay.Systems.EventSystem;
+using WF.Gameplay.Core.Events;
 
 namespace WF.Gameplay.Systems.InventorySystem
 {
@@ -9,6 +9,16 @@ namespace WF.Gameplay.Systems.InventorySystem
         public static StorageSystem Instance { get; private set; }
         [SerializeField] private string warehouseId = "Warehouse";
         private void Awake() { if (Instance != null && Instance != this) { Destroy(gameObject); return; } Instance = this; DontDestroyOnLoad(gameObject); }
-        public void EnsureWarehouse(int slotLimit) { var mgr = ContainerSystem.ContainerManager.Instance; if (mgr == null) return; var d = mgr.Get(warehouseId); if (d == null) { d = new ContainerData { Id = warehouseId, Type = ContainerType.Warehouse, SlotLimit = slotLimit }; mgr.Register(d); GameEvents.RaiseContainerUpdated(d); } }
+        public void EnsureWarehouse(int slotLimit) 
+        { 
+            var mgr = ContainerSystem.ContainerManager.Instance; if (mgr == null) return; 
+            var d = mgr.Get(warehouseId); 
+            if (d == null) 
+            { 
+                d = new ContainerData { Id = warehouseId, Type = ContainerType.Warehouse, SlotLimit = slotLimit }; 
+                mgr.Register(d); 
+                EventBus.Publish(new ContainerUpdatedEvent(d)); 
+            } 
+        }
     }
 }

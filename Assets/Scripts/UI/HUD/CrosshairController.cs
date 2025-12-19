@@ -4,6 +4,7 @@ using UnityEngine;
 /// 控制游戏中的准星UI，使其跟随鼠标位置，并管理系统光标的可见性。
 /// </summary>
 using WF.Gameplay.Systems.Camera;
+using WF.Gameplay.Core.Interfaces;
 using UCamera = UnityEngine.Camera;
 
 namespace WF.Gameplay.UI.HUD
@@ -19,7 +20,8 @@ public class CrosshairController : MonoBehaviour
     [SerializeField] private Canvas parentCanvas;
     [Tooltip("是否在游戏时隐藏系统光标。")]
     [SerializeField] private bool hideSystemCursor = true;
-    [SerializeField] private Vector2 externalOffset;
+    
+    private IPlayerCombatState _combatState;
 
     // 缓存的游戏主摄像机。
     private UCamera _gameplayCamera;
@@ -37,6 +39,19 @@ public class CrosshairController : MonoBehaviour
         if (parentCanvas == null)
         {
             parentCanvas = GetComponentInParent<Canvas>();
+        }
+    }
+
+    private void Start()
+    {
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            _combatState = player.GetComponent<IPlayerCombatState>();
+        }
+        if (_combatState == null)
+        {
+            _combatState = FindObjectOfType<WF.Gameplay.Systems.Player.PlayerCombat>();
         }
     }
 
@@ -80,15 +95,17 @@ public class CrosshairController : MonoBehaviour
         if (parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
         {
             Vector3 p = Input.mousePosition;
-            p.x += externalOffset.x;
-            p.y += externalOffset.y;
+            Vector2 offset = _combatState != null ? _combatState.CrosshairOffset : Vector2.zero;
+            p.x += offset.x;
+            p.y += offset.y;
             crosshairRect.position = p;
         }
         else
         {
+            Vector2 offset = _combatState != null ? _combatState.CrosshairOffset : Vector2.zero;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 parentCanvas.transform as RectTransform,
-                new Vector2(Input.mousePosition.x + externalOffset.x, Input.mousePosition.y + externalOffset.y),
+                new Vector2(Input.mousePosition.x + offset.x, Input.mousePosition.y + offset.y),
                 parentCanvas.worldCamera,
                 out Vector2 localPoint);
 
@@ -148,11 +165,6 @@ public class CrosshairController : MonoBehaviour
         {
             parentCanvas.worldCamera = _gameplayCamera;
         }
-    }
-
-    public void SetExternalOffset(Vector2 offset)
-    {
-        externalOffset = offset;
     }
 }
 }

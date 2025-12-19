@@ -1,58 +1,71 @@
-代码架构与规范规则文档 (Agent AI Guide)
-0. 响应效率优化规则 (Response Efficiency Rules)
-规则 0：文档优先原则
 
-在响应任何用户需求时，Agent AI 必须首先阅读相关的README.md文件，以快速获取架构上下文和模块状态。
+# Agent AI 代码架构规则指南 (最终完整版)
 
-执行流程：
+## 0\. 响应效率优化规则
 
-🥇 首先阅读根 Scripts/README.md 了解整体架构
+**规则0：文档优先原则 (P0)**
+在响应任何用户需求时，必须首先阅读相关的 `README.md` 文件。
 
-🥈 按需阅读子模块README获取详细信息
+  * **执行流程**：根`README` → 子模块`README` → 具体代码文件（仅必要时）。
+  * **目标**：快速理解架构、定位文件、避免冲突、提升响应速度。
 
-🥉 仅在必要时深入分析具体代码文件
+**规则0.1：README 更新策略 (P1)**
 
-阅读目标：
+  * **重大变更**（新增文件、修改接口、改变依赖）：**强制**立即更新对应 `README.md`。
+  * **内部实现**（Bug修复、逻辑优化）：可以**跳过** README 更新，以节省 Token 和响应时间。
 
-✅ 快速理解模块职责和当前状态
+-----
 
-✅ 定位相关文件和依赖关系
+## I. 核心设计原则
 
-✅ 避免重复工作和架构冲突
+**规则1：严格分层架构 (P0)**
+所有代码必须分为：数据层 (Data)、契约层 (Interface)、逻辑层 (Systems)、视图层 (UI)。
 
-✅ 提升响应速度60-80%
+  * 各层严禁直接引用非相邻层（如逻辑层不能直接引用 UI 组件）。
 
-I. 核心设计原则：职责分离（Separation of Concerns - SOC）
-规则 1：所有代码必须严格分层，分为 数据层 (Data)、契约层 (Interface)、逻辑层 (Systems) 和 视图层 (UI)。
+**规则2：命名空间规范 (P1)**
+命名空间必须使用 `WF.Gameplay`。
 
-规则 2：命名空间必须使用 WF.Gameplay，并根据其文件夹路径进行扩展。
+  * 根据文件夹路径扩展：`Scripts/Systems/Player/` → `WF.Gameplay.Systems.Player`。
 
-II. 强制代码放置规则 (Mandatory Placement Rules)
-规则名称	规则描述	目标路径	示例文件
-契约统一	任何 interface 必须放在此文件夹中。严禁存放任何实现代码。	Scripts/Core/Interfaces/	IDamageable.cs, IPoolable.cs
-纯数据放置	任何不包含 MonoBehaviour 且只定义数据的 class、struct 或 enum 必须放在此文件夹。	Scripts/Core/Data/	DamageInfo.cs, DamageType.cs
-逻辑隔离	任何业务逻辑、核心管理器必须放在 Systems 文件夹中。严禁直接引用 UI 组件。	Scripts/Systems/[ModuleName]/	InventoryManager.cs, HealthSystem.cs
-视图分离	任何继承自 MonoBehaviour 且包含 UI 组件引用的脚本必须放在 UI 文件夹中。	Scripts/UI/[ModuleName]/	PackageUISlotController.cs
-III. 文档维护规则 (Documentation Maintenance Rules)
-规则：实时README更新
+**规则3：程序集定义 (Asmdef) 物理隔离 (P0) [新增]**
 
-在每次代码变更后必须立即更新对应的README.md文件
+  * 使用 Unity 的 Assembly Definition (`.asmdef`) 文件来强制执行层级依赖，确保物理上无法跨层引用违规。
+      * **Core 层**：不引用其他层。
+      * **Systems 层**：仅引用 Core。
+      * **UI/View 层**：引用 Core 和 Systems。
 
-新增文件时必须在README的"脚本清单"中添加条目
+-----
 
-修改文件功能时必须更新README中的职责描述
+## II. 强制代码放置规则 (P0)
 
-删除文件时必须从README中移除对应条目
+| 规则名称 | 规则描述 | 目标路径 | 示例文件 |
+| :--- | :--- | :--- | :--- |
+| **契约统一** | 任何 `interface` 必须放在此文件夹 | `Scripts/Core/Interfaces/` | `IDamageable.cs` |
+| **纯数据放置** | 纯数据 `class`、`struct`、`enum` | `Scripts/Core/Data/` | `DamageInfo.cs` |
+| **逻辑隔离** | 业务逻辑、核心管理器（纯 C\#） | `Scripts/Systems/[ModuleName]/` | `HealthSystem.cs` |
+| **视图分离** | `MonoBehaviour` 且包含 UI 组件 | `Scripts/UI/[ModuleName]/` | `PackageUISlotController.cs` |
 
-规则：README文件结构
+-----
 
-text
+## III. 文档维护规则 (P1)
+
+**规则：实时README更新**
+每次代码变更后必须立即更新对应的 `README.md`（除非是逻辑修复）。
+
+  * 新增文件：在 README 的"脚本清单"中添加条目。
+  * 修改文件：更新 README 中的职责描述。
+  * 删除文件：从 README 中移除对应条目。
+
+**规则：README文件结构**
+
+```markdown
 # [文件夹名] 模块文档
 
 ## 模块概述
-- **主要职责**：[简要描述]
-- **设计原则**：[架构原则]
-- **依赖关系**：[依赖模块]
+- **主要职责**: [简要描述]
+- **设计原则**: [架构原则]
+- **依赖关系**: [依赖模块]
 
 ## 脚本清单与说明
 | 脚本文件 | 核心类名 | 职责描述 | 状态 |
@@ -60,48 +73,207 @@ text
 | `FileName.cs` | `ClassName` | 功能描述 | ✅/🚧 |
 
 ## 对外接口/依赖
-- **依赖的模块**：[模块列表]
-- **对外提供的接口**：[方法签名]
-IV. 枚举文件规范 (Enum File Specifications)
-规则：枚举独立放置
+- **依赖的模块**: [模块列表]
+- **对外提供的接口**: [方法签名]
+```
 
-所有 enum 定义必须放在独立的 .cs 文件中
+-----
 
-枚举文件必须放置在 Core/Data/ 文件夹中
+## IV. 文件结构规范
 
-文件名必须与枚举名完全一致
+**规则：枚举独立放置 (P2)**
+所有 `enum` 定义必须放在独立的 `.cs` 文件中，放置在 `Core/Data/` 文件夹，文件名必须与枚举名完全一致。
 
-规则：ScriptableObject 分类
+**规则：ScriptableObject分类 (P2)**
 
-纯配置数据的 ScriptableObject 放在 Core/Data/
+  * 纯配置数据的 `ScriptableObject`：放在 `Core/Data/`。
+  * 包含逻辑实现的 `ScriptableObject`：放在 `Systems/[ModuleName]/`。
 
-包含逻辑实现的 ScriptableObject 放在 Systems/[ModuleName]/
+**规则：单一职责文件 (P1)**
+每个 `.cs` 文件只能包含一个主要的 `class`、`struct` 或 `enum`。严禁在同一个文件中定义多个不相关的类型。
 
-V. 文件拆分规范 (File Separation Rules)
-规则：单一职责文件
+-----
 
-每个 .cs 文件只能包含一个主要的 class、struct 或 enum
+## V. UI交互与模态规范 (P3)
 
-严禁在同一个文件中定义多个不相关的类型
+**规则：拖放统一**
+所有拖放交互的 UI 元素必须共享同一个根 Canvas。
 
-VI. 命名空间映射规则 (Namespace Mapping Rules)
-规则：严格路径映射
+**规则：模态控制**
+模态窗口通过根节点 `SetActive` 控制显示/隐藏。
 
-Scripts/Systems/Player/ → WF.Gameplay.Systems.Player
+**规则：输入阻断**
+模态窗口必须包含全屏 `ModalBlockerPanel` 阻挡输入。
 
-Scripts/UI/Crosshair/ → WF.Gameplay.UI.Crosshair
+-----
 
-Scripts/Core/Data/ → WF.Gameplay.Core.Data
+## VI. 依赖注入与解耦规则 (P0)
 
-VII. UI 交互与模态规范
-规则：拖放统一
+**规则：注入方式区分 (P0) [修正原规则]**
 
-所有拖放交互的UI元素必须共享同一个根Canvas
+  * **纯 C\# 类（Systems/Logic）**：所有依赖必须通过**构造函数注入**。
+  * **Unity 组件（MonoBehaviour）**：必须通过 **DI 容器**提供的 **属性/字段注入 (`[Inject]`)** 或 **方法注入** (如 `Construct` 方法)。
+  * **严禁**：在 `MonoBehaviour` 中使用构造函数。
 
-规则：模态控制
+**规则：依赖抽象化**
+通过接口依赖抽象，不依赖具体实现类。服务类必须实现接口。
 
-模态窗口通过根节点 SetActive 控制显示/隐藏
+**规则：构造参数指导**
 
-规则：输入阻断
+  * 1-3个依赖：很好，类职责明确。
+  * 7-9个依赖：考虑是否拆分。
+  * 10+个依赖：需要重构，可能是上帝对象。
 
-模态窗口必须包含全屏 ModalBlockerPanel 阻挡输入
+**规则：禁止硬编码依赖**
+严禁使用单例模式直接访问全局实例。严禁直接调用静态管理器。依赖关系必须在构造函数中明确声明。
+
+-----
+
+## VII. 事件系统与松耦合规则 (P0)
+
+**规则：事件总线通信**
+跨模块通信必须使用事件总线。事件定义放在 `Core/Events/ Events/` 文件夹。
+
+**规则：事件命名与数据**
+
+  * 事件命名使用过去式：`PlayerDamagedEvent`、`ItemCollectedEvent`。
+  * 事件必须是只读的 **数据传输对象 (DTO)**，推荐使用 `struct` 或 `record` 类型，携带必要数据。
+  * 发布者不关心谁处理，处理者不关心谁发布。
+
+-----
+
+## VIII. 命名规范与可读性规则 (P1)
+
+**规则：接口命名**
+
+  * 接口：`I` 前缀 → `IDamageable`
+  * 抽象类：`Base` 前缀 → `BaseCharacter`
+  * 静态类：`Utility` 后缀 → `MathUtility`
+  * 布尔属性：`Is/Has/Can` 前缀 → `IsActive`、`HasWeapon`
+
+**规则：命名风格**
+
+  * **帕斯卡命名法**：类名、方法名、属性名、事件名 → `PlayerController`、`CalculateDamage()`
+  * **骆驼命名法**：局部变量、参数、私有字段（`_` 前缀）→ `currentHealth`、`_damageAmount`
+
+**规则：避免的命名**
+缩写（除非是通用缩写），单字母变量（循环中的 `i` 除外），数字后缀，类型名作为变量名。
+
+-----
+
+## IX. 方法设计与可扩展性规则 (P1)
+
+**规则：参数数量限制**
+方法参数不超过 4 个。超过 3 个必须使用参数对象（构造函数和服务注入除外）。
+
+**规则：方法长度限制**
+单个方法不超过 30 行（不包括空行和注释）。一个方法只做一件事（单一职责）。
+
+**规则：开闭原则实现**
+对扩展开放，对修改关闭。使用策略模式处理可变算法。
+
+**规则：参数对象模式**
+对于复杂的参数列表，必须使用参数对象封装。
+
+-----
+
+## X. 异步编程规范 (New)
+
+**规则：异步方案选择 (P1)**
+
+  * **首选方案**：使用 **UniTask** (或 `Cysharp.Threading.Tasks`) 替代原生的 `Task` 和 `Coroutine`（为了零 GC 和 WebGL 兼容性）。
+
+**规则：异步安全与取消 (P0)**
+
+  * 异步方法必须以 `Async` 结尾（如 `LoadAssetAsync`）。
+  * 所有异步方法必须接受 `CancellationToken` 参数。
+  * 在 `OnDestroy` 或生命周期结束时，必须取消关联的 `CancellationTokenSource`。
+  * **禁止**：禁止使用 `async void`（除了事件处理器）。
+
+-----
+
+## XI. Unity特定与性能规则 (P3)
+
+**规则：MonoBehaviour生命周期**
+
+  * `Awake()`：初始化组件引用。
+  * `Start()`：初始化运行时数据。
+  * `OnDestroy()`：清理事件订阅和异步任务。
+  * 避免在 `Update()` 中调用 `GetComponent<>()` 或执行内存分配。
+
+**规则：性能优化**
+
+  * 使用对象池管理频繁创建销毁的对象。
+  * 减少每帧的 GC 分配。
+  * 使用 `[SerializeField] private` 序列化字段。
+
+**规则：资源管理 (P1) [增强]**
+
+  * **禁止硬编码路径**：所有动态加载的资源必须通过 **Addressables** 或 `AssetReference` 引用。严禁使用 `Resources.Load("StringPath")`。
+  * 运行时修改的数据不使用 ScriptableObject。
+
+-----
+
+## XII. 设计模式与扩展性规则 (P2)
+
+  * **装饰器模式**：装饰器类必须实现与被装饰类相同的接口，通过构造函数接收内层服务。
+  * **工厂模式**：复杂对象的创建使用工厂模式，工厂方法返回接口。
+  * **策略模式**：将算法或行为抽象为策略接口。
+  * **观察者模式**：通过事件总线实现观察者模式。
+
+-----
+
+## XIII. 安全性与健壮性规则 (P3)
+
+**规则：空值安全 (P3)**
+公共方法入口必须检查参数空值。启用 C\# `nullable reference types`。
+
+**规则：异常处理 (P3)**
+在构造函数中验证依赖不为空。使用明确的异常类型。
+
+**规则：防御性编程**
+对可能为 `null` 的引用进行检查。使用 **Guard Clauses** 提前返回。
+
+**规则：日志分级 (P3) [新增]**
+
+  * **Log**：仅用于流程状态变化（如“游戏开始”）。
+  * **Warning**：用于可恢复的错误或非预期情况。
+  * **Error**：用于导致逻辑中断的严重错误。
+  * 提交代码前，必须移除所有临时调试日志 (`Debug.Log("111")`)。
+
+-----
+
+## XIV. 依赖注入容器规则 (P2)
+
+**规则：DI容器使用**
+使用 DI 容器管理依赖关系（推荐 Zenject 或 VContainer）。在安装器（Installer）中统一配置。
+
+**规则：生命周期管理**
+
+  * **单例**：全局唯一 (`.AsSingle()`)。
+  * **瞬态**：每次新实例（`.AsTransient()`）。
+  * **作用域**：同一作用域内单例（`.AsScoped()`）。
+
+-----
+
+## XV. Agent AI工作流程
+
+**接收请求**：用户提供代码或修改需求。
+
+1.  **文档优先**：先读取相关 `README.md` 了解架构。
+2.  **松耦合检查 (P0)**：检查代码是否遵循依赖注入（Rule VI）和事件驱动（Rule VII）。
+3.  **异步安全检查 (P0)**：检查异步方法是否包含 `CancellationToken`（Rule X）。
+4.  **可读性优化 (P1)**：检查命名（Rule VIII）和方法设计（Rule IX）。
+5.  **安全性检查 (P3)**：检查空值安全（Rule XIII）。
+6.  **建议生成**：基于规则提供修改建议。
+7.  **代码生成**：生成符合所有规则的代码。
+8.  **README 更新**：根据 Rule 0.1 决定是否更新相关文档。
+
+-----
+
+## XVI. 规则优先级
+
+  * **P0（必须遵守 - 降低耦合度/安全）**：规则0.1、Rule 1、Rule 3 (Asmdef)、Rule VI (DI 区分)、Rule VII (事件)、Rule X (异步安全)。
+  * **P1（强烈建议 - 可读性/资源）**：Rule III (文档维护)、Rule VIII (命名)、Rule XI (资源管理)。
+  * **P2（优化建议 - 扩展性）**：Rule IV (文件结构)、Rule XII (设计模式)、Rule XIV (DI 容器)。
+  * **P3（安全保障 - 健壮性/性能）**：Rule V (UI)、Rule IX (方法设计)、Rule XI (性能)、Rule XIII (安全性)。

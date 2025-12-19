@@ -23,6 +23,8 @@
 | `HUDPanelController.cs` | `HUDPanelController` | 管理 Package/Box 面板开关与模态输入 | ✅ |
 | `HotbarController.cs` | `HotbarController` | 快捷栏槽位选择与高亮 | ✅ |
 | `CrosshairController.cs` | `CrosshairController` | 准星跟随与系统光标控制 | ✅ |
+| `StaminaHUDController.cs` | `StaminaHUDController` | 材质驱动体力条填充与显隐逻辑 | ✅ |
+| `HotbarSlot.cs` | `HotbarSlot` | 快捷栏槽位组件，引用选中背景 | ✅ |
 
 ### Inventory/
 | 脚本文件 | 核心类名 | 职责描述 | 状态 |

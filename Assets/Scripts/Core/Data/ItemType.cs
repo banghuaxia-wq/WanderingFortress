@@ -1,4 +1,4 @@
 namespace WF.Gameplay.Core.Data
 {
-    public enum ItemType { Consumable, Tool, Weapon, Armor, Material, Quest }
+    public enum ItemType { Consumable, Tool, Weapon, Armor, Material, Quest, Gun, Ammo, Melee, Throwable }
 }

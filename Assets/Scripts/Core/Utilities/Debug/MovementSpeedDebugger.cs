@@ -41,11 +41,9 @@ public class MovementSpeedDebugger : MonoBehaviour
             if (kvs != null && kvs.Count > 0)
             {
                 sb.Append(" keys=");
-                for (int i = 0; i < kvs.Count; i++)
+                foreach (var kv in kvs)
                 {
-                    var kv = kvs[i];
-                    sb.AppendFormat("{0}:{1:F3}", kv.Key, kv.Value);
-                    if (i < kvs.Count - 1) sb.Append(", ");
+                    sb.AppendFormat("{0}:{1:F3}, ", kv.Key, kv.Value);
                 }
             }
         }

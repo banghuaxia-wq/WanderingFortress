@@ -22,7 +22,6 @@ namespace WF.Gameplay.Core.Utilities.Pooling
         [SerializeField] private List<PoolEntry> pools = new List<PoolEntry>();
         [SerializeField] private Transform worldPoolRoot;
         [SerializeField] private Transform uiPoolRoot;
-        [SerializeField] private Transform hudCanvasRoot;
 
         private readonly Dictionary<GameObject, Queue<GameObject>> _poolByPrefab = new Dictionary<GameObject, Queue<GameObject>>();
         private readonly Dictionary<string, GameObject> _prefabById = new Dictionary<string, GameObject>();
@@ -52,7 +51,7 @@ namespace WF.Gameplay.Core.Utilities.Pooling
                     q = new Queue<GameObject>(Mathf.Max(1, entry.initialSize));
                     _poolByPrefab[entry.prefab] = q;
                 }
-                Transform parent = entry.parent != null ? entry.parent : (IsUIPrefab(entry.prefab) ? (hudCanvasRoot != null ? hudCanvasRoot : uiPoolRoot) : worldPoolRoot);
+                Transform parent = entry.parent != null ? entry.parent : (IsUIPrefab(entry.prefab) ? uiPoolRoot : worldPoolRoot);
                 for (int c = 0; c < entry.initialSize; c++)
                 {
                     GameObject inst = Instantiate(entry.prefab, parent);
@@ -119,7 +118,7 @@ namespace WF.Gameplay.Core.Utilities.Pooling
                 var entry = _entryByPrefab[prefab];
                 if (entry.expandable)
                 {
-                    Transform parent = entry.parent != null ? entry.parent : (IsUIPrefab(prefab) ? (hudCanvasRoot != null ? hudCanvasRoot : uiPoolRoot) : worldPoolRoot);
+                    Transform parent = entry.parent != null ? entry.parent : (IsUIPrefab(prefab) ? uiPoolRoot : worldPoolRoot);
                     obj = Instantiate(prefab, parent);
                     EnsurePooledObject(obj, prefab);
                     obj.SetActive(false);
@@ -144,7 +143,7 @@ namespace WF.Gameplay.Core.Utilities.Pooling
                 _poolByPrefab[prefab] = q;
             }
             var entry = _entryByPrefab.TryGetValue(prefab, out var e) ? e : null;
-            Transform parent = (entry != null && entry.parent != null) ? entry.parent : (IsUIPrefab(obj) ? (hudCanvasRoot != null ? hudCanvasRoot : uiPoolRoot) : worldPoolRoot);
+            Transform parent = (entry != null && entry.parent != null) ? entry.parent : (IsUIPrefab(obj) ? uiPoolRoot : worldPoolRoot);
             obj.transform.SetParent(parent, false);
             po.OnDespawned();
             obj.SetActive(false);

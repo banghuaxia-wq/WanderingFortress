@@ -104,7 +104,7 @@ Material:
     - _GlossyReflections: 0
     - _GlowAlpha: 0.5
     - _GlowStrength: 0
-    - _GlowWidth: 0.05
+    - _GlowWidth: 0.105
     - _InnerRadius: 0.25
     - _Metallic: 0
     - _OcclusionStrength: 1
@@ -121,7 +121,7 @@ Material:
     - _Stamina: 1
     - _StartAngle: 90
     - _Surface: 0
-    - _UseFillForColor: 0
+    - _UseFillForColor: 1
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
