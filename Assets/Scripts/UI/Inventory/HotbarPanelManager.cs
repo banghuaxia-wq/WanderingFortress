@@ -27,16 +27,53 @@ namespace WF.Gameplay.UI.Inventory
             if (content == null) content = transform;
             if (slotPrefab == null || slotPool == null) return;
             var sys = HotbarSystem.Instance; if (sys == null) return;
-            int childCount = content.childCount;
-            for (int i = childCount - 1; i >= 0; i--) 
-            { 
-                var go = content.GetChild(i).gameObject; 
+            for (int i = content.childCount - 1; i >= 0; i--)
+            {
+                var child = content.GetChild(i);
+                if (child == null) continue;
+                if (child.name == "SelectedIndicator") continue;
+
+                var go = child.gameObject;
                 var po = go.GetComponent<WF.Gameplay.Core.Utilities.Pooling.PooledObject>();
-                if (po != null) slotPool.Release(go); else Destroy(go);
+                if (po != null)
+                {
+                    slotPool.Release(go);
+                }
             }
+
+            var reusableSlots = new System.Collections.Generic.List<PackageUISlotController>(content.childCount);
+            for (int i = 0; i < content.childCount; i++)
+            {
+                var child = content.GetChild(i);
+                if (child == null) continue;
+                if (child.name == "SelectedIndicator") continue;
+
+                var slot = child.GetComponent<PackageUISlotController>();
+                if (slot == null)
+                {
+                    slot = child.GetComponentInChildren<PackageUISlotController>(true);
+                    if (slot == null && child.Find("Icon") != null)
+                    {
+                        slot = child.gameObject.AddComponent<PackageUISlotController>();
+                    }
+                }
+
+                if (slot != null) reusableSlots.Add(slot);
+            }
+
             for (int i = 0; i < sys.Count; i++)
             {
-                var slot = slotPool.Get(slotPrefab, content);
+                PackageUISlotController slot;
+                if (i < reusableSlots.Count)
+                {
+                    slot = reusableSlots[i];
+                }
+                else
+                {
+                    slot = slotPool.Get(slotPrefab, content);
+                }
+
+                if (slot == null) continue;
                 slot.Bind(sys.Get(i));
                 slot.SetMeta(WF.Gameplay.Core.Data.TransferSource.Hotbar, null, i);
             }

@@ -61,9 +61,12 @@ namespace WF.Gameplay.Systems.Building
 
             if (definition.Prefab != null)
             {
-                Vector3 pos = CellToWorldCenter(anchorCell);
                 Quaternion rot = RotationToWorld(rotation);
-                placed.Instance = Instantiate(definition.Prefab, pos, rot);
+                Vector3 pivotOffset = definition.Prefab.transform.localPosition;
+                Vector3 pos = CellToWorldCenter(anchorCell) + (rot * pivotOffset);
+                pos.y += definition.PlacementYOffsetMeters;
+                Quaternion finalRotation = rot * definition.Prefab.transform.localRotation;
+                placed.Instance = Instantiate(definition.Prefab, pos, finalRotation);
             }
 
             _placed.Add(instanceId, placed);

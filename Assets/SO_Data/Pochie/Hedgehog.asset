@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pochieName: "\u706B\u9F99\u679C\u523A\u732C"
   type: 0
-  modelPrefab: {fileID: 5603788833315369113, guid: edc08f82dac5e124ab27f55a62f62dfa,
+  modelPrefab: {fileID: 4203507186642693151, guid: edc08f82dac5e124ab27f55a62f62dfa,
     type: 3}
   preferredItem: {fileID: 0}
   tameCost: 1

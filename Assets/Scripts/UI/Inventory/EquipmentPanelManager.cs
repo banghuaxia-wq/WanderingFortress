@@ -47,6 +47,7 @@ namespace WF.Gameplay.UI.Inventory
             var child = parent.childCount > 0 ? parent.GetChild(0) : null;
             var ctrl = child != null ? child.GetComponent<PackageUISlotController>() : null;
             if (ctrl == null) ctrl = slotPool.Get(slotPrefab, parent);
+            if (ctrl == null) return;
             _map[type] = ctrl;
             ctrl.SetMeta(TransferSource.Equipment, null, (int)type);
         }
@@ -54,7 +55,12 @@ namespace WF.Gameplay.UI.Inventory
         private void Refresh()
         {
             var sys = EquipmentSystem.Instance; if (sys == null) return;
-            foreach (var kv in _map) { var s = sys.Get(kv.Key); kv.Value.Bind(s); }
+            foreach (var kv in _map)
+            {
+                if (kv.Value == null) continue;
+                var s = sys.Get(kv.Key);
+                kv.Value.Bind(s);
+            }
         }
     }
 }

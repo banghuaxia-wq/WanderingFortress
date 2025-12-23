@@ -7,6 +7,21 @@ namespace WF.Gameplay.Systems.Building
 {
     public class BuildModeController : MonoBehaviour
     {
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void EnsureInScene()
+        {
+            if (FindObjectOfType<BuildModeController>() != null) return;
+
+            if (FindObjectOfType<BuildGridSystem>() == null)
+            {
+                var gridGo = new GameObject("BuildGridSystem");
+                gridGo.AddComponent<BuildGridSystem>();
+            }
+
+            var controllerGo = new GameObject("BuildModeController");
+            controllerGo.AddComponent<BuildModeController>();
+        }
+
         [SerializeField] private BuildGridSystem gridSystem; // 网格系统引用（中文注释）
         [SerializeField] private BuildingDefinition selectedBuilding; // 当前选择的建筑定义（用于预览/放置）（中文注释）
         [SerializeField] private GridOverlayController gridOverlay; // 网格覆盖显示控制器（中文注释）
@@ -21,6 +36,21 @@ namespace WF.Gameplay.Systems.Building
         // 初始化摄像机并关闭建造模式（中文注释）
         private void Start()
         {
+            if (gridSystem == null)
+            {
+                gridSystem = FindObjectOfType<BuildGridSystem>();
+            }
+
+            if (gridOverlay == null)
+            {
+                gridOverlay = FindObjectOfType<GridOverlayController>();
+                if (gridOverlay == null)
+                {
+                    var overlayGo = new GameObject("GridOverlay");
+                    gridOverlay = overlayGo.AddComponent<GridOverlayController>();
+                }
+            }
+
             AcquireCamera();
             SetBuildMode(false);
         }

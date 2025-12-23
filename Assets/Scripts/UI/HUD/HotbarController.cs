@@ -34,6 +34,7 @@ namespace WF.Gameplay.UI.HUD
 
         private Coroutine _indicatorMoveCo; // 指示器移动协程引用（中文注释）
         private Coroutine _rebuildAfterUpdateCo;
+        private Coroutine _refreshAfterLayoutCo; // 等待布局稳定后刷新选中指示器（中文注释）
 
         private void Awake()
         {
@@ -49,13 +50,13 @@ namespace WF.Gameplay.UI.HUD
             ResolveHotbarPanel();
             BuildSlotCache();
             EnsureIndicatorInitialized();
-            RefreshSelectionVisuals();
+            ScheduleRefreshAfterLayout();
 
             // 默认选中第一格，并重置其他格子的SelectedBackground为隐藏（仅首次）（中文注释）
             if (!_initialized && HotbarSystem.Instance != null)
             {
                 HotbarSystem.Instance.SelectSlot(0);
-                RefreshSelectionVisuals();
+                ScheduleRefreshAfterLayout();
                 _initialized = true;
             }
         }
@@ -78,7 +79,7 @@ namespace WF.Gameplay.UI.HUD
             {
                 HotbarSystem.Instance.SelectSlot(0);
             }
-            RefreshSelectionVisuals();
+            ScheduleRefreshAfterLayout();
             _initialized = true;
         }
 
@@ -90,6 +91,35 @@ namespace WF.Gameplay.UI.HUD
             {
                 StopCoroutine(_rebuildAfterUpdateCo);
                 _rebuildAfterUpdateCo = null;
+            }
+            if (_indicatorMoveCo != null)
+            {
+                StopCoroutine(_indicatorMoveCo);
+                _indicatorMoveCo = null;
+            }
+            if (_refreshAfterLayoutCo != null)
+            {
+                StopCoroutine(_refreshAfterLayoutCo);
+                _refreshAfterLayoutCo = null;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_rebuildAfterUpdateCo != null)
+            {
+                StopCoroutine(_rebuildAfterUpdateCo);
+                _rebuildAfterUpdateCo = null;
+            }
+            if (_indicatorMoveCo != null)
+            {
+                StopCoroutine(_indicatorMoveCo);
+                _indicatorMoveCo = null;
+            }
+            if (_refreshAfterLayoutCo != null)
+            {
+                StopCoroutine(_refreshAfterLayoutCo);
+                _refreshAfterLayoutCo = null;
             }
         }
 
@@ -115,7 +145,32 @@ namespace WF.Gameplay.UI.HUD
         private void BuildSlotCacheAndRefresh()
         {
             BuildSlotCache();
+            ScheduleRefreshAfterLayout();
+        }
+
+        private void ScheduleRefreshAfterLayout() // 延迟到布局稳定后刷新选中态，避免首次位置偏移（中文注释）
+        {
+            if (!isActiveAndEnabled) return;
+            if (_refreshAfterLayoutCo != null) StopCoroutine(_refreshAfterLayoutCo);
+            _refreshAfterLayoutCo = StartCoroutine(RefreshAfterLayoutStable());
+        }
+
+        private System.Collections.IEnumerator RefreshAfterLayoutStable() // 等待一帧并强制布局重建后刷新（中文注释）
+        {
+            yield return null;
+            ForceRebuildHotbarLayout();
             RefreshSelectionVisuals();
+            _refreshAfterLayoutCo = null;
+        }
+
+        private void ForceRebuildHotbarLayout() // 强制HotbarPanel布局计算，确保anchoredPosition已更新（中文注释）
+        {
+            if (hotbarPanel == null) return;
+            var rt = hotbarPanel as RectTransform;
+            if (rt == null) return;
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
+            Canvas.ForceUpdateCanvases();
         }
 
         private void Update()
@@ -231,6 +286,9 @@ namespace WF.Gameplay.UI.HUD
                     {
                         selectedIndicator.SetParent(hotbarPanel, false);
                         selectedIndicator.name = "SelectedIndicator";
+                        selectedIndicator.anchoredPosition = Vector2.zero;
+                        selectedIndicator.localScale = Vector3.one;
+                        selectedIndicator.localRotation = Quaternion.identity;
                     }
                     break;
                 }
@@ -251,7 +309,12 @@ namespace WF.Gameplay.UI.HUD
 
         private void MoveIndicatorToSlot(HotbarSlot slot)
         {
-            if (slot == null || selectedIndicator == null) return;
+            if (slot == null) return;
+            if (selectedIndicator == null)
+            {
+                EnsureIndicatorInitialized();
+                if (selectedIndicator == null) return;
+            }
             var rt = slot.transform as RectTransform;
             if (rt == null) return;
             selectedIndicator.gameObject.SetActive(true);
@@ -268,16 +331,31 @@ namespace WF.Gameplay.UI.HUD
 
         private System.Collections.IEnumerator AnimateIndicatorTo(Vector2 target)
         {
-            Vector2 start = selectedIndicator.anchoredPosition;
+            var indicator = selectedIndicator;
+            if (indicator == null)
+            {
+                _indicatorMoveCo = null;
+                yield break;
+            }
+
+            Vector2 start = indicator.anchoredPosition;
             float dur = Mathf.Max(0.0001f, selectedIndicatorMoveSeconds);
             float t = 0f;
             while (t < 1f)
             {
+                if (indicator == null)
+                {
+                    _indicatorMoveCo = null;
+                    yield break;
+                }
                 t += Time.deltaTime / dur;
-                selectedIndicator.anchoredPosition = Vector2.Lerp(start, target, t);
+                indicator.anchoredPosition = Vector2.Lerp(start, target, t);
                 yield return null;
             }
-            selectedIndicator.anchoredPosition = target;
+            if (indicator != null)
+            {
+                indicator.anchoredPosition = target;
+            }
             _indicatorMoveCo = null;
         }
 

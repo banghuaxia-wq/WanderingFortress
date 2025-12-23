@@ -1,4 +1,5 @@
 using UnityEngine;
+using UCamera = UnityEngine.Camera;
 using WF.Gameplay.Core.Data;
 
 namespace WF.Gameplay.Systems.Building
@@ -20,7 +21,7 @@ namespace WF.Gameplay.Systems.Building
 
         [SerializeField] private Transform followTarget; // 网格中心跟随目标（通常为玩家）（中文注释）
         [SerializeField] private float overlaySizeMeters = 160f; // 覆盖平面边长（米）（中文注释）
-        [SerializeField] private float overlayHeightOffset = 0.02f; // 覆盖平面高度偏移（避免Z-fighting，Terrain可适当加大）（中文注释）
+        [SerializeField] private float overlayHeightOffset = 0.35f; // 覆盖平面高度偏移（避免Z-fighting，Terrain可适当加大）（中文注释）
         [SerializeField] private Color lineColor = new Color(1f, 1f, 1f, 1f); // 网格线颜色（中文注释）
         [SerializeField] private float baseAlpha = 0.35f; // 网格线基础透明度（中文注释）
         [SerializeField] private float lineWidthMeters = 0.04f; // 网格线宽（米）（中文注释）
@@ -43,11 +44,17 @@ namespace WF.Gameplay.Systems.Building
             EnsureMesh();
             EnsureMaterial();
             ApplyStaticMaterialParams();
+            if (_renderer != null) _renderer.enabled = false;
 
             if (followTarget == null)
             {
                 var player = GameObject.FindGameObjectWithTag("Player");
                 if (player != null) followTarget = player.transform;
+            }
+
+            if (followTarget == null && UCamera.main != null)
+            {
+                followTarget = UCamera.main.transform;
             }
         }
 
@@ -58,7 +65,7 @@ namespace WF.Gameplay.Systems.Building
             Vector3 p = followTarget != null ? followTarget.position : transform.position;
             if (followTarget != null)
             {
-                transform.position = new Vector3(p.x, p.y + overlayHeightOffset, p.z);
+                transform.position = new Vector3(p.x, overlayHeightOffset, p.z);
             }
             if (_materialInstance != null)
             {
@@ -82,10 +89,17 @@ namespace WF.Gameplay.Systems.Building
             if (_renderer != null) _renderer.enabled = visible;
             if (visible)
             {
+                if (followTarget == null)
+                {
+                    var player = GameObject.FindGameObjectWithTag("Player");
+                    if (player != null) followTarget = player.transform;
+                    if (followTarget == null && UCamera.main != null) followTarget = UCamera.main.transform;
+                }
+
                 Vector3 p = followTarget != null ? followTarget.position : transform.position;
                 if (followTarget != null)
                 {
-                    transform.position = new Vector3(p.x, p.y + overlayHeightOffset, p.z);
+                    transform.position = new Vector3(p.x, overlayHeightOffset, p.z);
                 }
 
                 if (_materialInstance != null)
