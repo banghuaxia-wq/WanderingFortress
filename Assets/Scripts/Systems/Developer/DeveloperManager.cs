@@ -174,10 +174,10 @@ namespace WF.Gameplay.Systems.Developer
         {
             var pos = devSpawnPoint != null ? devSpawnPoint.position : Vector3.zero;
             var rot = devSpawnPoint != null ? devSpawnPoint.rotation : Quaternion.identity;
-            var go = WF.Gameplay.Systems.Pochie.PochieFactory.CreateFromDataStatic(devPochieData, pos, rot);
+            var go = WF.Gameplay.Systems.Pochie.PochieService.EnsureInstance().SpawnFromData(devPochieData, pos, rot);
             if (go == null)
             {
-                Debug.LogWarning("SpawnPochieForTest 失败：未设置 Pochie 数据 或 工厂不可用。");
+                Debug.LogWarning("SpawnPochieForTest 失败：未设置 Pochie 数据 或 服务不可用。");
             }
         }
     }

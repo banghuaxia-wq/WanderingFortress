@@ -135,11 +135,6 @@ namespace WF.Gameplay.Systems.Pochie
                 }
             }
 
-            if (pochieStats == null)
-            {
-                Debug.LogError("Pochie stats asset is not assigned.", this);
-            }
-
             _buffManager = GetComponent<WF.Gameplay.Systems.Buffs.BuffManager>();
         }
 
@@ -148,6 +143,12 @@ namespace WF.Gameplay.Systems.Pochie
         /// </summary>
         private void Start()
         {
+            if (pochieStats == null)
+            {
+                enabled = false;
+                Debug.LogError("Pochie stats asset is not assigned.", this);
+                return;
+            }
             InitializeCombatState();
         }
 

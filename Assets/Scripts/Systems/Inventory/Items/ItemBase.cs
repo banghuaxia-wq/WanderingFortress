@@ -22,6 +22,11 @@ namespace WF.Gameplay.Systems.Inventory.Items
 
         public virtual bool CanUse(GameObject user) => false;
         public virtual void Use(GameObject user) { }
+
+        protected void SetType(ItemType value)
+        {
+            type = value;
+        }
         
         protected virtual void OnValidate()
         {

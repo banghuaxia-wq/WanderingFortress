@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using WF.Gameplay.Core.Events;
 using WF.Gameplay.Core.Data;
 using WF.Gameplay.Core.Interfaces;
+using WF.Gameplay.Systems.InventorySystem;
 
 namespace WF.Gameplay.UI.Inventory
 {
@@ -129,7 +129,9 @@ namespace WF.Gameplay.UI.Inventory
                 FromContainerId = srcSlot.containerId,
                 ToContainerId = containerId
             };
-            EventBus.Publish(new TransferRequestedEvent(req));
+            var transferSystem = InventoryTransferSystem.Instance;
+            if (transferSystem == null) return;
+            transferSystem.TryTransfer(req);
         }
     }
 }

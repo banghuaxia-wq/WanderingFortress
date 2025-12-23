@@ -33,6 +33,7 @@ namespace WF.Gameplay.UI.HUD
         [SerializeField] private float selectedIndicatorMoveSeconds = 0.15f; // 指示器移动时长（中文注释）
 
         private Coroutine _indicatorMoveCo; // 指示器移动协程引用（中文注释）
+        private Coroutine _rebuildAfterUpdateCo;
 
         private void Awake()
         {
@@ -85,23 +86,30 @@ namespace WF.Gameplay.UI.HUD
         {
             EventBus.Unsubscribe<HotbarUpdatedEvent>(OnHotbarUpdated);
             EventBus.Unsubscribe<HotbarSelectionChangedEvent>(OnHotbarSelectionChanged);
+            if (_rebuildAfterUpdateCo != null)
+            {
+                StopCoroutine(_rebuildAfterUpdateCo);
+                _rebuildAfterUpdateCo = null;
+            }
         }
 
         private void OnHotbarUpdated(HotbarUpdatedEvent e)
         {
-            // HotbarPanelManager rebuilds slots, so we must rebuild cache
-            // We need to wait a frame or ensure this runs AFTER HotbarPanelManager
-            // Since EventBus order is undefined/subscription order, 
-            // we should probably do this in LateUpdate or use a coroutine if needed.
-            // But HotbarPanelManager also subscribes. If it runs first, we are good.
-            // If we run first, we get old slots.
-            // Safe bet: Coroutine or Invoke
-            Invoke(nameof(BuildSlotCacheAndRefresh), 0.1f);
+            if (!isActiveAndEnabled) return;
+            if (_rebuildAfterUpdateCo != null) StopCoroutine(_rebuildAfterUpdateCo);
+            _rebuildAfterUpdateCo = StartCoroutine(RebuildAfterHotbarUpdate());
         }
 
         private void OnHotbarSelectionChanged(HotbarSelectionChangedEvent e)
         {
             RefreshSelectionVisuals();
+        }
+
+        private System.Collections.IEnumerator RebuildAfterHotbarUpdate()
+        {
+            yield return null;
+            BuildSlotCacheAndRefresh();
+            _rebuildAfterUpdateCo = null;
         }
 
         private void BuildSlotCacheAndRefresh()

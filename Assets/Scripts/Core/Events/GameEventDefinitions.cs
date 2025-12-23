@@ -40,13 +40,6 @@ namespace WF.Gameplay.Core.Events
         public bool IsOverloaded; 
         public WeightChangedEvent(float w, bool o1, bool o2) { Weight = w; IsOverweight = o1; IsOverloaded = o2; }
     }
-    
-    // 转移请求事件
-    public struct TransferRequestedEvent 
-    { 
-        public TransferRequest Request; 
-        public TransferRequestedEvent(TransferRequest req) { Request = req; } 
-    }
 
     // 物品相关事件
     public struct ItemUsedEvent

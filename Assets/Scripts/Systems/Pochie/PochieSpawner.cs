@@ -94,14 +94,14 @@ namespace WF.Gameplay.Systems.Pochie
             var dataToUse = GetRandomPochieData();
             if (dataToUse != null)
             {
-                var go = PochieFactory.CreateFromDataStatic(dataToUse, spawnPoint.position, spawnPoint.rotation);
+                var go = PochieService.EnsureInstance().SpawnFromData(dataToUse, spawnPoint.position, spawnPoint.rotation);
                 pochieInstance = go;
                 combatController = go != null ? go.GetComponent<PochieCombatController>() : null;
             }
             else
             {
                 var prefabToSpawn = GetRandomPochiePrefab();
-                var go = PochieFactory.CreateFromPrefabStatic(prefabToSpawn, null, spawnPoint.position, spawnPoint.rotation);
+                var go = PochieService.EnsureInstance().SpawnFromPrefab(prefabToSpawn, null, spawnPoint.position, spawnPoint.rotation);
                 pochieInstance = go;
                 combatController = go != null ? go.GetComponent<PochieCombatController>() : null;
             }
@@ -145,14 +145,7 @@ namespace WF.Gameplay.Systems.Pochie
                 {
                     _occupiedPoints.Remove(spawnPoint);
                 }
-                if (PoolManager.Instance != null)
-                {
-                    PoolManager.Instance.Release(pochieInstance);
-                }
-                else
-                {
-                    Destroy(pochieInstance);
-                }
+                PochieService.EnsureInstance().Despawn(pochieInstance);
                 if (uiGO != null)
                 {
                     if (PoolManager.Instance != null)
