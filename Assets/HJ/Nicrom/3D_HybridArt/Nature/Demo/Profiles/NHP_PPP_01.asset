@@ -15,7 +15,7 @@ MonoBehaviour:
   active: 1
   temperature:
     m_OverrideState: 1
-    m_Value: 2.5
+    m_Value: 12
   tint:
     m_OverrideState: 0
     m_Value: 0
@@ -33,14 +33,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   active: 1
   lift:
-    m_OverrideState: 0
-    m_Value: {x: 1, y: 1, z: 1, w: 0}
+    m_OverrideState: 1
+    m_Value: {x: 0.55806005, y: 0.66854274, z: 1, w: -0.0076046665}
   gamma:
     m_OverrideState: 0
-    m_Value: {x: 0.83484244, y: 0.8862928, z: 1, w: 0}
+    m_Value: {x: 0.97738594, y: 1, z: 0.90846074, w: 0}
   gain:
     m_OverrideState: 0
-    m_Value: {x: 1, y: 1, z: 1, w: 0}
+    m_Value: {x: 0.88244045, y: 0.8543704, z: 1, w: 0}
 --- !u!114 &-4770662400631324746
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -155,19 +155,19 @@ MonoBehaviour:
   active: 1
   postExposure:
     m_OverrideState: 1
-    m_Value: 1.12
+    m_Value: 1.33
   contrast:
     m_OverrideState: 1
-    m_Value: 13.4
+    m_Value: 46
   colorFilter:
     m_OverrideState: 1
-    m_Value: {r: 1, g: 0.9997603, b: 0.9264151, a: 1}
+    m_Value: {r: 1, g: 0.92883724, b: 0.84339625, a: 1}
   hueShift:
     m_OverrideState: 0
     m_Value: 0
   saturation:
     m_OverrideState: 1
-    m_Value: 10.5
+    m_Value: 37
 --- !u!114 &7390286549887623858
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -186,10 +186,10 @@ MonoBehaviour:
     m_Value: 1
   threshold:
     m_OverrideState: 1
-    m_Value: 0.5
+    m_Value: 0.46
   intensity:
     m_OverrideState: 1
-    m_Value: 0.62
+    m_Value: 0
   scatter:
     m_OverrideState: 0
     m_Value: 0.7
