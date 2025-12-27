@@ -7,6 +7,8 @@ namespace WF.Gameplay.Systems.Building
 {
     public class BuildModeController : MonoBehaviour
     {
+        private const string FixCubeNamePrefix = "FixCube"; // 用于补平落差的方块名前缀（建造模式需要忽略它们）（中文注释）
+
         [SerializeField] private BuildGridSystem gridSystem; // 网格系统引用（中文注释）
         [SerializeField] private BuildingDefinition selectedBuilding; // 当前选择的建筑定义（用于预览/放置）（中文注释）
         [SerializeField] private GridOverlayController gridOverlay; // 网格覆盖显示控制器（中文注释）
@@ -27,6 +29,8 @@ namespace WF.Gameplay.Systems.Building
         private BuildingDefinition _ghostDefinition; // 当前预览对应的建筑定义（中文注释）
         private Renderer[] _ghostRenderers; // 预览渲染器缓存（中文注释）
         private MaterialPropertyBlock _ghostPropertyBlock; // 预览材质属性块（中文注释）
+        private readonly RaycastHit[] _cursorRaycastHits = new RaycastHit[32]; // 鼠标射线命中缓存（避免分配）（中文注释）
+        private readonly Collider[] _blockingOverlapColliders = new Collider[64]; // 阻挡检测Overlap缓存（避免分配）（中文注释）
 
         // 初始化运行时对象（避免在字段初始化阶段调用Unity原生CreateImpl）（中文注释）
         private void Awake()
@@ -104,9 +108,30 @@ namespace WF.Gameplay.Systems.Building
             if (gridSystem == null) return false;
 
             Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
-            if (!Physics.Raycast(ray, out var hit, 9999f, groundMask)) return false;
+            int hitCount = Physics.RaycastNonAlloc(ray, _cursorRaycastHits, 9999f, groundMask, QueryTriggerInteraction.Ignore);
+            if (hitCount <= 0) return false;
 
-            cell = gridSystem.WorldToCell(hit.point);
+            float bestDistance = float.PositiveInfinity;
+            Vector3 bestPoint = default;
+            bool hasBest = false;
+            for (int i = 0; i < hitCount; i++)
+            {
+                var hit = _cursorRaycastHits[i];
+                var collider = hit.collider;
+                if (collider == null) continue;
+                if (IsIgnoredPlacementCollider(collider)) continue;
+
+                if (hit.distance < bestDistance)
+                {
+                    bestDistance = hit.distance;
+                    bestPoint = hit.point;
+                    hasBest = true;
+                }
+            }
+
+            if (!hasBest) return false;
+
+            cell = gridSystem.WorldToCell(bestPoint);
             return true;
         }
 
@@ -138,7 +163,37 @@ namespace WF.Gameplay.Systems.Building
             Vector3 extents = (worldMax - worldMin) * 0.5f;
             center.y = placementY + 0.75f;
             extents.y = Mathf.Max(0.25f, extents.y) + 0.75f;
-            return Physics.CheckBox(center, extents, Quaternion.identity, blockingMask, QueryTriggerInteraction.Ignore);
+
+            int count = Physics.OverlapBoxNonAlloc(center, extents, _blockingOverlapColliders, Quaternion.identity, blockingMask, QueryTriggerInteraction.Ignore);
+            if (count <= 0) return false;
+
+            for (int i = 0; i < count; i++)
+            {
+                var collider = _blockingOverlapColliders[i];
+                if (collider == null) continue;
+                if (IsIgnoredPlacementCollider(collider)) continue;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsIgnoredPlacementCollider(Collider collider) // 是否需要被建造模式忽略的碰撞体（中文注释）
+        {
+            if (collider == null) return false;
+
+            Transform t = collider.transform;
+            while (t != null)
+            {
+                string name = t.name;
+                if (!string.IsNullOrEmpty(name) && name.StartsWith(FixCubeNamePrefix))
+                {
+                    return true;
+                }
+                t = t.parent;
+            }
+
+            return false;
         }
 
         // 更新Ghost预览的位置、旋转与可放置表现（中文注释）

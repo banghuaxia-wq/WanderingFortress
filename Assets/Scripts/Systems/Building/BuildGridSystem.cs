@@ -6,6 +6,8 @@ namespace WF.Gameplay.Systems.Building
 {
     public class BuildGridSystem : MonoBehaviour
     {
+        private const string FixCubeNamePrefix = "FixCube"; // 用于补平落差的方块名前缀（建造模式需要忽略它们）（中文注释）
+
         [SerializeField] private BuildGridConfig config; // 网格配置（单元尺寸/原点）（中文注释）
 
         private readonly Dictionary<Vector2Int, int> _occupiedByInstance = new Dictionary<Vector2Int, int>(); // 占用表：cell -> instanceId（中文注释）
@@ -84,6 +86,7 @@ namespace WF.Gameplay.Systems.Building
                     var hit = _surfaceRaycastHits[h];
                     var collider = hit.collider;
                     if (collider == null) continue;
+                    if (IsIgnoredPlacementCollider(collider)) continue;
 
                     if (hit.distance < topHitDistance)
                     {
@@ -105,6 +108,7 @@ namespace WF.Gameplay.Systems.Building
                     var hit = _surfaceRaycastHits[h];
                     var collider = hit.collider;
                     if (collider == null) continue;
+                    if (IsIgnoredPlacementCollider(collider)) continue;
 
                     if (!TryGetAllowedLayerFromHierarchy(collider.transform, surfaceMask, out int allowedLayer))
                     {
@@ -135,6 +139,23 @@ namespace WF.Gameplay.Systems.Building
 
             placementY = maxY;
             return true;
+        }
+
+        private static bool IsIgnoredPlacementCollider(Collider collider) // 是否需要被建造模式忽略的碰撞体（中文注释）
+        {
+            if (collider == null) return false;
+
+            Transform t = collider.transform;
+            while (t != null)
+            {
+                string name = t.name;
+                if (!string.IsNullOrEmpty(name) && name.StartsWith(FixCubeNamePrefix))
+                {
+                    return true;
+                }
+                t = t.parent;
+            }
+            return false;
         }
 
         private static bool TryGetAllowedLayerFromHierarchy(Transform transform, LayerMask allowedMask, out int allowedLayer)

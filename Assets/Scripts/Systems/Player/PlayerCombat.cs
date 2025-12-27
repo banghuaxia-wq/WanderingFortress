@@ -27,6 +27,7 @@ namespace WF.Gameplay.Systems.Player
         private IWeaponItem _currentWeapon;
         private Vector2 _currentCrosshairOffset;
         private bool _inputEnabled = true;
+        private PlayerMove _playerMove; // 玩家移动组件引用（用于查询/控制冲刺状态）（中文注释）
 
         public Vector2 CrosshairOffset => _currentCrosshairOffset;
 
@@ -37,6 +38,7 @@ namespace WF.Gameplay.Systems.Player
                 shootOrigin = transform;
             }
 
+            _playerMove = GetComponent<PlayerMove>();
             AcquireGameplayCamera();
         }
 
@@ -73,9 +75,12 @@ namespace WF.Gameplay.Systems.Player
             ApplyRecoilDecay();
             UpdateCrosshairOffset();
 
-            if (!Input.GetButton(FireInputName))
+            bool wantsAttack = WantsAttackInput(_currentWeapon.AttackData);
+            if (!wantsAttack) return;
+
+            if (_playerMove != null && _playerMove.IsSprinting && !CanAttackWhileSprinting(_currentWeapon.AttackData))
             {
-                return;
+                _playerMove.ForceStopSprint();
             }
 
             // AttackManager handles cooldowns now
@@ -84,6 +89,22 @@ namespace WF.Gameplay.Systems.Player
             // For now, assuming auto-fire or cooldown management by AttackManager.
             
             FireWeapon();
+        }
+
+        private static bool WantsAttackInput(AttackData data) // 根据攻击类型决定使用按住还是单击（中文注释）
+        {
+            if (data == null) return false;
+            if (data.Type == AttackType.Ranged)
+            {
+                return Input.GetButton(FireInputName);
+            }
+            return Input.GetButtonDown(FireInputName);
+        }
+
+        private static bool CanAttackWhileSprinting(AttackData data) // 冲刺期间是否允许攻击（中文注释）
+        {
+            if (data == null) return false;
+            return data.Type == AttackType.Ranged;
         }
 
         private void FireWeapon()
