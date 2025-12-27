@@ -9,6 +9,7 @@ namespace WF.Gameplay.Systems.Inventory.Items
         [SerializeField] private string itemId;
         [SerializeField] private string displayName;
         [SerializeField] private ItemType type;
+        [SerializeField] private ItemRarity rarity = ItemRarity.Common;
         [SerializeField] private Sprite icon;
         [SerializeField] private float weight;
         [TextArea] [SerializeField] private string description;
@@ -16,6 +17,7 @@ namespace WF.Gameplay.Systems.Inventory.Items
         public string ItemId => itemId;
         public string DisplayName => displayName;
         public ItemType Type => type;
+        public ItemRarity Rarity => rarity;
         public Sprite Icon => icon;
         public float Weight => weight;
         public string Description => description;

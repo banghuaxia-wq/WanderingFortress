@@ -22,6 +22,7 @@ namespace WF.Gameplay.Systems.Building
         [SerializeField] private Transform followTarget; // 网格中心跟随目标（通常为玩家）（中文注释）
         [SerializeField] private float overlaySizeMeters = 160f; // 覆盖平面边长（米）（中文注释）
         [SerializeField] private float overlayHeightOffset = 0.35f; // 覆盖平面高度偏移（避免Z-fighting，Terrain可适当加大）（中文注释）
+        [SerializeField] private LayerMask surfaceMask = ~0;
         [SerializeField] private Color lineColor = new Color(1f, 1f, 1f, 1f); // 网格线颜色（中文注释）
         [SerializeField] private float baseAlpha = 0.35f; // 网格线基础透明度（中文注释）
         [SerializeField] private float lineWidthMeters = 0.04f; // 网格线宽（米）（中文注释）
@@ -34,6 +35,7 @@ namespace WF.Gameplay.Systems.Building
         private MeshFilter _filter; // MeshFilter引用（中文注释）
         private Material _materialInstance; // 运行时材质实例（避免修改共享材质）（中文注释）
         private bool _visible; // 是否显示网格覆盖层（中文注释）
+        private Mesh _mesh;
 
         // 初始化网格覆盖平面与材质（中文注释）
         private void Awake()
@@ -62,15 +64,11 @@ namespace WF.Gameplay.Systems.Building
         private void Update()
         {
             if (!_visible) return;
-            Vector3 p = followTarget != null ? followTarget.position : transform.position;
-            if (followTarget != null)
-            {
-                transform.position = new Vector3(p.x, overlayHeightOffset, p.z);
-            }
-            if (_materialInstance != null)
-            {
-                _materialInstance.SetVector(GridCenterId, new Vector4(p.x, 0f, p.z, 0f));
-            }
+            if (followTarget == null) return;
+
+            Vector3 p = followTarget.position;
+            transform.position = new Vector3(p.x, transform.position.y, p.z);
+            if (_materialInstance != null) _materialInstance.SetVector(GridCenterId, new Vector4(p.x, 0f, p.z, 0f));
         }
 
         // 销毁运行时材质实例（中文注释）
@@ -79,6 +77,10 @@ namespace WF.Gameplay.Systems.Building
             if (Application.isPlaying && _materialInstance != null)
             {
                 Destroy(_materialInstance);
+            }
+            if (Application.isPlaying && _mesh != null)
+            {
+                Destroy(_mesh);
             }
         }
 
@@ -89,18 +91,12 @@ namespace WF.Gameplay.Systems.Building
             if (_renderer != null) _renderer.enabled = visible;
             if (visible)
             {
-                if (followTarget == null)
-                {
-                    var player = GameObject.FindGameObjectWithTag("Player");
-                    if (player != null) followTarget = player.transform;
-                    if (followTarget == null && UCamera.main != null) followTarget = UCamera.main.transform;
-                }
-
                 Vector3 p = followTarget != null ? followTarget.position : transform.position;
                 if (followTarget != null)
                 {
-                    transform.position = new Vector3(p.x, overlayHeightOffset, p.z);
+                    transform.position = new Vector3(p.x, transform.position.y, p.z);
                 }
+                TrySnapToGround(p);
 
                 if (_materialInstance != null)
                 {
@@ -177,27 +173,46 @@ namespace WF.Gameplay.Systems.Building
             }
         }
 
+        private void TrySnapToGround(Vector3 centerWorld)
+        {
+            if (surfaceMask.value == 0) return;
+
+            var origin = new Vector3(centerWorld.x, centerWorld.y + 200f, centerWorld.z);
+            if (Physics.Raycast(origin, Vector3.down, out var hit, 800f, surfaceMask, QueryTriggerInteraction.Ignore))
+            {
+                transform.position = new Vector3(transform.position.x, hit.point.y + overlayHeightOffset, transform.position.z);
+            }
+        }
+
         // 确保覆盖用Quad Mesh存在（中文注释）
         private void EnsureMesh()
         {
             if (_filter == null) return;
-            if (_filter.sharedMesh != null) return;
+            if (_mesh != null) return;
 
             float half = Mathf.Max(1f, overlaySizeMeters) * 0.5f;
-            var mesh = new Mesh { name = "GridOverlayQuad" };
-
-            mesh.vertices = new[]
+            var vertices = new[]
             {
                 new Vector3(-half, 0f, -half),
-                new Vector3(half, 0f, -half),
-                new Vector3(half, 0f, half),
                 new Vector3(-half, 0f, half),
+                new Vector3(half, 0f, half),
+                new Vector3(half, 0f, -half)
             };
+            var uvs = new[]
+            {
+                new Vector2(0f, 0f),
+                new Vector2(0f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(1f, 0f)
+            };
+            var tris = new[] { 0, 1, 2, 0, 2, 3 };
 
-            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-            _filter.sharedMesh = mesh;
+            _mesh = new Mesh { name = "GridOverlayQuad" };
+            _mesh.vertices = vertices;
+            _mesh.uv = uvs;
+            _mesh.triangles = tris;
+            _mesh.RecalculateBounds();
+            _filter.sharedMesh = _mesh;
         }
     }
 }

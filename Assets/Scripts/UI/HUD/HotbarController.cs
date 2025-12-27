@@ -262,7 +262,12 @@ namespace WF.Gameplay.UI.HUD
 
         private void EnsureIndicatorInitialized()
         {
-            if (selectedIndicator != null) { HideAllSlotSelectedBackgrounds(); return; }
+            if (selectedIndicator != null)
+            {
+                EnsureIndicatorIgnoresLayout(selectedIndicator);
+                HideAllSlotSelectedBackgrounds();
+                return;
+            }
             if (_slots.Count == 0) BuildSlotCache();
             // 优先使用HotbarPanel下已存在的名为"SelectedIndicator"的对象
             if (hotbarPanel != null)
@@ -271,6 +276,7 @@ namespace WF.Gameplay.UI.HUD
                 if (found != null)
                 {
                     selectedIndicator = found.GetComponent<RectTransform>();
+                    EnsureIndicatorIgnoresLayout(selectedIndicator);
                     HideAllSlotSelectedBackgrounds();
                     return;
                 }
@@ -289,11 +295,20 @@ namespace WF.Gameplay.UI.HUD
                         selectedIndicator.anchoredPosition = Vector2.zero;
                         selectedIndicator.localScale = Vector3.one;
                         selectedIndicator.localRotation = Quaternion.identity;
+                        EnsureIndicatorIgnoresLayout(selectedIndicator);
                     }
                     break;
                 }
             }
             HideAllSlotSelectedBackgrounds();
+        }
+
+        private void EnsureIndicatorIgnoresLayout(RectTransform indicator) // 确保指示器不参与布局计算（中文注释）
+        {
+            if (indicator == null) return;
+            var layoutElement = indicator.GetComponent<LayoutElement>();
+            if (layoutElement == null) layoutElement = indicator.gameObject.AddComponent<LayoutElement>();
+            layoutElement.ignoreLayout = true;
         }
 
         private void HideAllSlotSelectedBackgrounds()

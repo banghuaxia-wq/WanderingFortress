@@ -15,13 +15,13 @@
 | `PlayerMove.cs` | `PlayerMove` | 玩家移动和旋转控制 |
 | `PlayerCombat.cs` | `PlayerCombat` | 玩家战斗输入与攻击调用 |
 
-### Pochie/
+### Hatch/
 | 脚本文件 | 核心类名 | 职责描述 |
 |:---|:---|:---|
-| `PochieCombatController.cs` | `PochieCombatController` | Pochie战斗逻辑，实现IDamageable接口 |
-| `PochieSpawner.cs` | `PochieSpawner` | Pochie生成器，管理生成点和状态UI绑定 |
-| `PochieService.cs` | `PochieService` | Pochie生成/回收服务：统一生成与对象池回收逻辑 |
-| `PochieFactory.cs` | `PochieFactory` | 兼容入口：转发到PochieService（保留旧调用方式） |
+| `HatchCombatController.cs` | `HatchCombatController` | Hatch战斗逻辑，实现IDamageable接口 |
+| `HatchSpawner.cs` | `HatchSpawner` | Hatch生成器，管理生成点和状态UI绑定 |
+| `HatchService.cs` | `HatchService` | Hatch生成/回收服务：统一生成与对象池回收逻辑 |
+| `HatchFactory.cs` | `HatchFactory` | 兼容入口：转发到HatchService（保留旧调用方式） |
 
 ### Buffs/
 | 脚本文件 | 核心类名 | 职责描述 |
@@ -33,7 +33,7 @@
 | 脚本文件 | 核心类名 | 职责描述 |
 |:---|:---|:---|
 | `ApplySlowMovementByStack.cs` | `ApplySlowMovementByStack` | 按层数减速移动的Buff模块 |
-| `CastDamageToPochieByStack.cs` | `CastDamageToPochieByStack` | 按层数造成伤害的Buff模块 |
+| `CastDamageToHatchByStack.cs` | `CastDamageToHatchByStack` | 按层数造成伤害的Buff模块 |
 | `SedativeStunModule.cs` | `SedativeStunModule` | 镇静剂眩晕效果模块 |
 
 ### Camera/
@@ -67,6 +67,11 @@
 |:---|:---|:---|
 | `SimulationRangeSystem.cs` | `SimulationRangeSystem` | 动态实体距离分级：Active/Passive/Dormant切换 |
 | `SimulationLodAgent.cs` | `SimulationLodAgent` | 距离分级实体代理：批量开关组件/对象 |
+
+### Progress/
+| 脚本文件 | 核心类名 | 职责描述 |
+|:---|:---|:---|
+| `ProgressSystem.cs` | `ProgressSystem` | 通用进度流程：开始/更新/结束与场景加载/计时驱动 |
 
 
 ### ContainerSystem/
@@ -104,7 +109,7 @@
 
 ## 子模块文档
 - `Player/README.md` - 玩家系统文档
-- `Pochie/README.md` - Pochie 系统文档
+- `Hatch/README.md` - Hatch 系统文档
 - `Buffs/README.md` - Buff 系统文档
 - `Camera/README.md` - 摄像机系统文档
 - `Combat/README.md` - 战斗系统文档
@@ -120,10 +125,11 @@
 - **依赖的模块**: `Core/`
 - **对外提供的接口**:
   - `PlayerStateManager.Instance` (单例访问)
-  - `PochieCombatController.TakeDamage()`
+  - `HatchCombatController.TakeDamage()`
   - `BuffManager.AddBuff()/RemoveBuff()`
   - `EventBus.*` 事件发布与订阅 (Core/Events)
   - `ContainerManager.Open()/AddItem()/RemoveItem()`
   - `PlayerInventory.Add()/RemoveAt()/GetTotalWeight()` (玩家背包)
   - `BuildGridSystem.CanPlace()/TryPlace()/TryRemove()` (建筑占格写入/移除)
   - `SimulationRangeSystem.Register()/ForceMinimumState()` (动态实体距离分级)
+

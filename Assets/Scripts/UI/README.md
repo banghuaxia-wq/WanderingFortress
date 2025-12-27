@@ -35,7 +35,17 @@
 ### WorldSpaceInfo/
 | 脚本文件 | 核心类名 | 职责描述 | 状态 |
 |:---|:---|:---|:---|
-| `PochieStatusUI.cs` | `PochieStatusUI` | Pochie状态UI：血条/眩晕条/提示信息 | ✅ |
+| `HatchStatusUI.cs` | `HatchStatusUI` | Hatch状态UI：血条/眩晕条/提示信息 | ✅ |
+
+### Progress/
+| 脚本文件 | 核心类名 | 职责描述 | 状态 |
+|:---|:---|:---|:---|
+| `ProgressBarController.cs` | `ProgressBarController` | 进度条UI：订阅进度事件并渲染（全屏/HUD共用） | ✅ |
+
+### Scenes/
+| 脚本文件 | 核心类名 | 职责描述 | 状态 |
+|:---|:---|:---|:---|
+| `StartSceneStartButtonController.cs` | `StartSceneStartButtonController` | StartScene开始按钮：触发LoadingScene并加载目标场景 | ✅ |
 
 ## 子模块文档
 - `HUD/README.md` - HUD 组件与面板文档
@@ -43,7 +53,8 @@
 - `WorldSpaceInfo/README.md` - 世界空间 UI 文档
 
 ## 对外接口/依赖
-- **依赖的模块**: `Systems/Player`, `Systems/Pochie`, `Systems/InventorySystem`, `Systems/ContainerSystem`, `Core/Events`
+- **依赖的模块**: `Systems/Player`, `Systems/Hatch`, `Systems/InventorySystem`, `Systems/ContainerSystem`, `Core/Events`
 - **对外提供的接口**: 
   - `CrosshairController.SetExternalOffset()` (后坐力反馈)
-  - `PochieStatusUI.*` (绑定与刷新世界空间状态UI)
+  - `HatchStatusUI.*` (绑定与刷新世界空间状态UI)
+

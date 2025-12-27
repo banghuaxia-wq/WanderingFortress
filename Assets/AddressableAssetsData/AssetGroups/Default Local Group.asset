@@ -18,12 +18,12 @@ MonoBehaviour:
   m_GUID: ecb94fb85f6493e4ea6f65d049751f93
   m_SerializeEntries:
   - m_GUID: 43cb4f4d006411b468c30db8b776b0b3
-    m_Address: Assets/Addressables/Pochie/Hedgehog.asset
+    m_Address: Assets/Addressables/Hatch/Hedgehog.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f48924b98768c614eb1de4717b11dd0b
-    m_Address: Assets/SO_Data/NewAmmoItem.asset
+  - m_GUID: 3f57f2f2d98dbe04d803e00f52bf7871
+    m_Address: Wood
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

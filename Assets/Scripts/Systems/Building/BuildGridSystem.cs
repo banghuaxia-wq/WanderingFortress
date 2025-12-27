@@ -11,6 +11,7 @@ namespace WF.Gameplay.Systems.Building
         private readonly Dictionary<Vector2Int, int> _occupiedByInstance = new Dictionary<Vector2Int, int>(); // 占用表：cell -> instanceId（中文注释）
         private readonly Dictionary<int, PlacedBuilding> _placed = new Dictionary<int, PlacedBuilding>(); // 已放置建筑表：instanceId -> 数据（中文注释）
         private int _nextInstanceId = 1; // 自增实例ID（运行时）（中文注释）
+        private readonly RaycastHit[] _surfaceRaycastHits = new RaycastHit[32];
 
         private struct PlacedBuilding
         {
@@ -41,11 +42,130 @@ namespace WF.Gameplay.Systems.Building
             return true;
         }
 
+        public bool IsSurfaceValid(BuildingDefinition definition, Vector2Int anchorCell, GridRotation rotation, LayerMask surfaceMask, out float placementY)
+        {
+            placementY = 0f;
+            if (definition == null) return false;
+            if (config == null) return false;
+            if (definition.FootprintOffsets == null || definition.FootprintOffsets.Length == 0) return false;
+
+            if (surfaceMask.value == 0)
+            {
+                placementY = config.OriginWorld.y;
+                return true;
+            }
+
+            float startY = config.SurfaceRayStartHeightMeters;
+            float distance = config.SurfaceRayDistanceMeters;
+            float maxSlope = config.MaxSurfaceSlopeDegrees;
+            float maxDelta = config.MaxFootprintHeightDeltaMeters;
+
+            float minY = float.PositiveInfinity;
+            float maxY = float.NegativeInfinity;
+            float maxObservedSlope = 0f;
+
+            int roadLayer = LayerMask.NameToLayer("Road");
+            int groundLayer = LayerMask.NameToLayer("Ground");
+
+            var offsets = definition.FootprintOffsets;
+            for (int i = 0; i < offsets.Length; i++)
+            {
+                Vector2Int cell = anchorCell + RotateOffset(offsets[i], rotation);
+                Vector3 samplePos = CellToWorldCenter(cell);
+                var rayOrigin = new Vector3(samplePos.x, startY, samplePos.z);
+
+                int hitCount = Physics.RaycastNonAlloc(rayOrigin, Vector3.down, _surfaceRaycastHits, distance, ~0, QueryTriggerInteraction.Ignore);
+                if (hitCount <= 0) return false;
+
+                float topHitDistance = float.PositiveInfinity;
+                Transform topHitTransform = null;
+                for (int h = 0; h < hitCount; h++)
+                {
+                    var hit = _surfaceRaycastHits[h];
+                    var collider = hit.collider;
+                    if (collider == null) continue;
+
+                    if (hit.distance < topHitDistance)
+                    {
+                        topHitDistance = hit.distance;
+                        topHitTransform = collider.transform;
+                    }
+                }
+
+                if (topHitTransform == null) return false;
+                if (!TryGetAllowedLayerFromHierarchy(topHitTransform, surfaceMask, out _)) return false;
+
+                bool hasValidHit = false;
+                int bestRank = int.MaxValue;
+                float bestY = float.NegativeInfinity;
+                float bestSlope = 0f;
+
+                for (int h = 0; h < hitCount; h++)
+                {
+                    var hit = _surfaceRaycastHits[h];
+                    var collider = hit.collider;
+                    if (collider == null) continue;
+
+                    if (!TryGetAllowedLayerFromHierarchy(collider.transform, surfaceMask, out int allowedLayer))
+                    {
+                        continue;
+                    }
+
+                    int rank = GetSurfaceLayerRank(allowedLayer, roadLayer, groundLayer);
+                    float y = hit.point.y;
+                    if (rank < bestRank || (rank == bestRank && y > bestY))
+                    {
+                        bestRank = rank;
+                        bestY = y;
+                        bestSlope = Vector3.Angle(hit.normal, Vector3.up);
+                        hasValidHit = true;
+                    }
+                }
+
+                if (!hasValidHit) return false;
+
+                if (bestY < minY) minY = bestY;
+                if (bestY > maxY) maxY = bestY;
+                if (bestSlope > maxObservedSlope) maxObservedSlope = bestSlope;
+            }
+
+            if (float.IsInfinity(minY) || float.IsInfinity(maxY)) return false;
+            if ((maxY - minY) > maxDelta) return false;
+            if (maxObservedSlope > maxSlope) return false;
+
+            placementY = maxY;
+            return true;
+        }
+
+        private static bool TryGetAllowedLayerFromHierarchy(Transform transform, LayerMask allowedMask, out int allowedLayer)
+        {
+            allowedLayer = -1;
+            while (transform != null)
+            {
+                int layer = transform.gameObject.layer;
+                if (((1 << layer) & allowedMask.value) != 0)
+                {
+                    allowedLayer = layer;
+                    return true;
+                }
+                transform = transform.parent;
+            }
+            return false;
+        }
+
+        private static int GetSurfaceLayerRank(int layer, int roadLayer, int groundLayer)
+        {
+            if (layer == roadLayer) return 0;
+            if (layer == groundLayer) return 1;
+            return 2;
+        }
+
         // 尝试放置建筑：写入占用表并可选实例化预制体（中文注释）
-        public bool TryPlace(BuildingDefinition definition, Vector2Int anchorCell, GridRotation rotation, out int instanceId)
+        public bool TryPlace(BuildingDefinition definition, Vector2Int anchorCell, GridRotation rotation, LayerMask surfaceMask, out int instanceId)
         {
             instanceId = 0;
             if (!CanPlace(definition, anchorCell, rotation)) return false;
+            if (!IsSurfaceValid(definition, anchorCell, rotation, surfaceMask, out float placementY)) return false;
 
             instanceId = _nextInstanceId++;
 
@@ -64,7 +184,7 @@ namespace WF.Gameplay.Systems.Building
                 Quaternion rot = RotationToWorld(rotation);
                 Vector3 pivotOffset = definition.Prefab.transform.localPosition;
                 Vector3 pos = CellToWorldCenter(anchorCell) + (rot * pivotOffset);
-                pos.y += definition.PlacementYOffsetMeters;
+                pos.y = placementY + pivotOffset.y + definition.PlacementYOffsetMeters;
                 Quaternion finalRotation = rot * definition.Prefab.transform.localRotation;
                 placed.Instance = Instantiate(definition.Prefab, pos, finalRotation);
             }

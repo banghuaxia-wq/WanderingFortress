@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using WF.Gameplay.Core.Data;
@@ -19,9 +19,9 @@ namespace WF.Gameplay.Systems.Developer
         [SerializeField] private PlayerStats playerStats;
         [SerializeField] private BuffData buffAsset;
 
-        [Header("Pochie Spawn Settings")]
-        [Tooltip("用于测试生成的Pochie数据（SOPochie）")]
-        [SerializeField] private SOPochie devPochieData;
+        [Header("Hatch Spawn Settings")]
+        [Tooltip("用于测试生成的Hatch数据（SOHatch）")]
+        [SerializeField] private SOHatch devHatchData;
         [Tooltip("生成位置（为空则使用场景原点）")]
         [SerializeField] private Transform devSpawnPoint;
 
@@ -169,16 +169,17 @@ namespace WF.Gameplay.Systems.Developer
             Debug.Log("Loaded save.");
         }
 
-        [ContextMenu("Spawn Pochie For Test")]
-        public void SpawnPochieForTest()
+        [ContextMenu("Spawn Hatch For Test")]
+        public void SpawnHatchForTest()
         {
             var pos = devSpawnPoint != null ? devSpawnPoint.position : Vector3.zero;
             var rot = devSpawnPoint != null ? devSpawnPoint.rotation : Quaternion.identity;
-            var go = WF.Gameplay.Systems.Pochie.PochieService.EnsureInstance().SpawnFromData(devPochieData, pos, rot);
+            var go = WF.Gameplay.Systems.Hatch.HatchService.EnsureInstance().SpawnFromData(devHatchData, pos, rot);
             if (go == null)
             {
-                Debug.LogWarning("SpawnPochieForTest 失败：未设置 Pochie 数据 或 服务不可用。");
+                Debug.LogWarning("SpawnHatchForTest 失败：未设置 Hatch 数据 或 服务不可用。");
             }
         }
     }
 }
+

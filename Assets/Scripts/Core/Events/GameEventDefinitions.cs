@@ -88,10 +88,10 @@ namespace WF.Gameplay.Core.Events
         public CrosshairOffsetEvent(UnityEngine.Vector2 offset) { Offset = offset; }
     }
 
-    public struct PochieSpawnedEvent
+    public struct HatchSpawnedEvent
     {
         public UnityEngine.GameObject Instance;
-        public PochieSpawnedEvent(UnityEngine.GameObject instance) { Instance = instance; }
+        public HatchSpawnedEvent(UnityEngine.GameObject instance) { Instance = instance; }
     }
 
     public struct InputStateChangedEvent
@@ -99,4 +99,46 @@ namespace WF.Gameplay.Core.Events
         public bool InputEnabled;
         public InputStateChangedEvent(bool enabled) { InputEnabled = enabled; }
     }
+
+    public struct ProgressStartedEvent
+    {
+        public string ProgressId;
+        public ProgressViewMode ViewMode;
+        public string Title;
+        public float Progress01;
+        public bool CanCancel;
+        public ProgressStartedEvent(string progressId, ProgressViewMode viewMode, string title, float progress01, bool canCancel)
+        {
+            ProgressId = progressId;
+            ViewMode = viewMode;
+            Title = title;
+            Progress01 = progress01;
+            CanCancel = canCancel;
+        }
+    }
+
+    public struct ProgressUpdatedEvent
+    {
+        public string ProgressId;
+        public float Progress01;
+        public string Title;
+        public ProgressUpdatedEvent(string progressId, float progress01, string title)
+        {
+            ProgressId = progressId;
+            Progress01 = progress01;
+            Title = title;
+        }
+    }
+
+    public struct ProgressEndedEvent
+    {
+        public string ProgressId;
+        public ProgressEndReason Reason;
+        public ProgressEndedEvent(string progressId, ProgressEndReason reason)
+        {
+            ProgressId = progressId;
+            Reason = reason;
+        }
+    }
 }
+

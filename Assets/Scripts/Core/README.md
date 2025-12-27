@@ -19,11 +19,12 @@
 | `BuildGridConfig.cs` | `BuildGridConfig` | 建筑网格配置：单元尺寸与世界原点 |
 | `BuildingDefinition.cs` | `BuildingDefinition` | 建筑定义(SO)：占格Footprint、预制体、旋转开关 |
 | `GridRotation.cs` | `GridRotation` | 网格旋转枚举：R0/R90/R180/R270 |
-| `PochieType.cs` | `PochieType` | Pochie类型枚举定义 |
-| `PochieState.cs` | `PochieState` | Pochie状态枚举：Active/Stunned/Ally |
+| `HatchType.cs` | `HatchType` | Hatch类型枚举定义 |
+| `HatchState.cs` | `HatchState` | Hatch状态枚举：Active/Stunned/Ally |
 | `TameMethod.cs` | `TameMethod` | 驯服方式枚举定义 |
 | `ItemType.cs` | `ItemType` | 物品类型枚举：消耗品/工具/武器/防具/材料/任务 |
 | `ItemRarity.cs` | `ItemRarity` | 物品稀有度枚举 |
+| `UISlotType.cs` | `UISlotType` | UI格子类型枚举：背包/装备/快捷栏 |
 | `EquipmentSlotType.cs` | `EquipmentSlotType` | 装备槽位枚举：头/甲/手/裤/鞋 |
 | `ContainerType.cs` | `ContainerType` | 容器类型枚举：普通箱/食物箱/武器箱/防具箱/大宝箱/仓库 |
 | `ItemStack.cs` | `ItemStack` | 物品堆栈数据结构：数量、重量、图标等 |
@@ -39,12 +40,15 @@
 | `SimulationLodState.cs` | `SimulationLodState` | 距离分级状态枚举：Dormant/Passive/Active |
 | `TransferRequest.cs` | `TransferRequest` | 拖拽转移请求数据：来源/目标/索引 |
 | `WeaponCategory.cs` | `WeaponCategory` | 武器分类枚举 |
+| `ProgressEndReason.cs` | `ProgressEndReason` | 进度流程结束原因枚举：完成/取消/失败 |
+| `ProgressViewMode.cs` | `ProgressViewMode` | 进度条视图模式枚举：全屏/HUD |
+| `ProgressSnapshot.cs` | `ProgressSnapshot` | 进度流程快照数据：标题/进度/可取消等 |
 
 ### Events/
 | 脚本文件 | 核心类名 | 职责描述 |
 |:---|:---|:---|
 | `EventBus.cs` | `EventBus` | 全局事件总线（发布/订阅模式） |
-| `GameEventDefinitions.cs` | `ContainerOpenedEvent...` | 定义各类事件数据结构 (Struct)：包含 `StaminaChangedEvent`、`HotbarSelectionChangedEvent`、`CrosshairOffsetEvent` 等 |
+| `GameEventDefinitions.cs` | `ContainerOpenedEvent...` | 定义各类事件数据结构 (Struct)：包含 `StaminaChangedEvent`、`HotbarSelectionChangedEvent`、`CrosshairOffsetEvent`、`ProgressStartedEvent` 等 |
 
 ### Interfaces/
 | 脚本文件 | 核心类名 | 职责描述 |
@@ -63,8 +67,8 @@
 | `IContainerManager.cs` | `IContainerManager` | 容器管理器接口 |
 | `IPlayerInventory.cs` | `IPlayerInventory` | 玩家库存接口 |
 | `IPlayerCombatState.cs` | `IPlayerCombatState` | 玩家战斗状态契约 |
-| `IPochieFactory.cs` | `IPochieFactory` | Pochie工厂契约：从数据/预制体创建实体 |
-| `IPochieService.cs` | `IPochieService` | Pochie生成/回收服务契约：供Spawner与道具复用 |
+| `IHatchFactory.cs` | `IHatchFactory` | Hatch工厂契约：从数据/预制体创建实体 |
+| `IHatchService.cs` | `IHatchService` | Hatch生成/回收服务契约：供Spawner与道具复用 |
 | `ISimulationLodAgent.cs` | `ISimulationLodAgent` | 动态实体距离分级代理契约 |
 
 ### Utilities/
@@ -79,3 +83,4 @@
   - `IDamageable.TakeDamage(DamageInfo)`
   - `EventBus.Publish()/Subscribe()`
   - `PoolManager.Get()/Release()`
+

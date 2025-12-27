@@ -41,8 +41,9 @@ namespace WF.Gameplay.UI.Inventory
             {
                 var slot = slotPool.Get(slotPrefab, content);
                 var item = inv.Items[i];
-                slot.Bind(item);
+                slot.SetSlotType(UISlotType.Package);
                 slot.SetMeta(TransferSource.Package, null, i);
+                slot.Bind(item);
             }
         }
     }
