@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using WF.Gameplay.Core.Data;
 using WF.Gameplay.Systems.Buffs;
@@ -62,6 +62,11 @@ namespace WF.Gameplay.Systems.Hatch
         private bool _stunDecayBlocked;
         private BuffManager _buffManager;
 
+        public bool IsStunned => _currentState == HatchState.Stunned;
+        public bool CanBeTamedNow => _currentState == HatchState.Stunned && _currentHealth > MinValue;
+        public SOHatch HatchStats => hatchStats;
+        public float TameRange => tameRange;
+
         // -- 事件定义 --
         /// <summary>
         /// 当生命值更新时触发。参数：当前生命值, 最大生命值
@@ -115,7 +120,7 @@ namespace WF.Gameplay.Systems.Hatch
             }
             if (hatchRigidbody != null)
             {
-                hatchRigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+                hatchRigidbody.constraints |= RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
                 hatchRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
                 hatchRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
             }
@@ -145,9 +150,9 @@ namespace WF.Gameplay.Systems.Hatch
         {
             if (hatchStats == null)
             {
-                enabled = false;
-                Debug.LogError("Hatch stats asset is not assigned.", this);
-                return;
+                hatchStats = ScriptableObject.CreateInstance<SOHatch>();
+                hatchStats.name = "Runtime_DefaultHatchStats";
+                Debug.LogWarning("Hatch stats asset is not assigned. Using a runtime default SOHatch instance.", this);
             }
             InitializeCombatState();
         }
@@ -166,6 +171,12 @@ namespace WF.Gameplay.Systems.Hatch
             {
                 HandleTameInteraction();
             }
+        }
+
+        private void FixedUpdate()
+        {
+            if (hatchRigidbody == null) return;
+            hatchRigidbody.angularVelocity = Vector3.zero;
         }
 
         /// <summary>
@@ -207,6 +218,7 @@ namespace WF.Gameplay.Systems.Hatch
         public void SetStats(WF.Gameplay.Core.Data.SOHatch data)
         {
             hatchStats = data;
+            InitializeCombatState();
         }
 
         /// <summary>
@@ -346,13 +358,15 @@ namespace WF.Gameplay.Systems.Hatch
         /// </summary>
         private void EnterStunnedState()
         {
+            if (hatchStats == null) return;
             _currentState = HatchState.Stunned;
-            _currentStun = hatchStats != null ? hatchStats.MaxStunValue : _currentStun;
+            float maxStun = hatchStats.MaxStunValue;
+            _currentStun = maxStun;
             StopMovementImmediate();
 
             OnStunned?.Invoke();
-            OnStunChanged?.Invoke(_currentStun, hatchStats.MaxStunValue);
-            OnTooltipChanged?.Invoke("按 E 驯服", true);
+            OnStunChanged?.Invoke(_currentStun, maxStun);
+            OnTooltipChanged?.Invoke("按 E 驯服", IsPlayerInTameRange());
 
             if (enableDebugLogs)
             {
@@ -395,15 +409,14 @@ namespace WF.Gameplay.Systems.Hatch
         private void BecomeAlly()
         {
             _currentState = HatchState.Ally;
-            if (hatchStats != null)
-            {
-                _currentHealth = hatchStats.MaxHealth;
-            }
+            float maxHealth = hatchStats != null ? hatchStats.MaxHealth : _currentHealth;
+            float maxStun = hatchStats != null ? hatchStats.MaxStunValue : _currentStun;
+            _currentHealth = maxHealth;
             _currentStun = MinValue;
 
             OnTamed?.Invoke();
-            OnHealthChanged?.Invoke(_currentHealth, hatchStats.MaxHealth);
-            OnStunChanged?.Invoke(_currentStun, hatchStats.MaxStunValue);
+            OnHealthChanged?.Invoke(_currentHealth, maxHealth);
+            OnStunChanged?.Invoke(_currentStun, maxStun);
 
 
             if (enableDebugLogs)
@@ -423,9 +436,16 @@ namespace WF.Gameplay.Systems.Hatch
             StopMovementImmediate();
 
             OnDefeated?.Invoke();
-            OnTooltipChanged?.Invoke("Hatch倒下", true);
+            OnTooltipChanged?.Invoke("Hatch倒下", IsPlayerInTameRange());
 
             LogStateDebug("生命耗尽");
+        }
+
+        private bool IsPlayerInTameRange() // 判断玩家是否在驯服交互范围内（中文注释）
+        {
+            if (playerTransform == null) return false;
+            Vector3 offsetToPlayer = playerTransform.position - transform.position;
+            return offsetToPlayer.sqrMagnitude <= _cachedTameRangeSqr;
         }
 
         public void SetStunDecayBlocked(bool blocked)

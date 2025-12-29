@@ -15,6 +15,20 @@
 | `PlayerMove.cs` | `PlayerMove` | 玩家移动和旋转控制 |
 | `PlayerCombat.cs` | `PlayerCombat` | 玩家战斗输入与攻击调用 |
 
+### Enemy/
+| 脚本文件 | 核心类名 | 职责描述 |
+|:---|:---|:---|
+| `EnemyActor.cs` | `EnemyActor` | 敌人角色行为中心：聚合模块并供行为树调用 |
+| `EnemyVisionSensor.cs` | `EnemyVisionSensor` | 视觉传感器：锥形视野+遮挡射线 |
+| `EnemyHearingReceiver.cs` | `EnemyHearingReceiver` | 听觉接收：订阅声音事件并写入记忆 |
+| `EnemyTargetMemory.cs` | `EnemyTargetMemory` | 目标记忆：最后看见/听见位置与时间、惊吓触发 |
+| `EnemyNavMovementController.cs` | `EnemyNavMovementController` | 移动控制：NavMeshAgent封装与速度档 |
+| `EnemyPatrolRandomSampler.cs` | `EnemyPatrolRandomSampler` | 巡逻点采样：出生点中心随机NavMesh点 |
+| `EnemyPatrolController.cs` | `EnemyPatrolController` | 巡逻流程：选点移动与到点停留计时 |
+| `EnemySearchController.cs` | `EnemySearchController` | 搜索流程：到点后原地搜索旋转计时 |
+| `EnemyCombatController.cs` | `EnemyCombatController` | 战斗控制：近战扇形检测/远程发射投射物 |
+| `EnemyDamageReceiver.cs` | `EnemyDamageReceiver` | 伤害接收：实现IDamageable并转发到行为中心 |
+
 ### Hatch/
 | 脚本文件 | 核心类名 | 职责描述 |
 |:---|:---|:---|

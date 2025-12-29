@@ -1,7 +1,10 @@
 using UnityEngine;
 using UCamera = UnityEngine.Camera;
 using WF.Gameplay.Core.Data;
+using WF.Gameplay.Core.Events;
 using WF.Gameplay.Systems.Camera;
+using WF.Gameplay.Systems.Inventory.Items;
+using WF.Gameplay.Systems.InventorySystem;
 
 namespace WF.Gameplay.Systems.Building
 {
@@ -23,6 +26,8 @@ namespace WF.Gameplay.Systems.Building
 
         private GridRotation _rotation; // 当前预览旋转（中文注释）
         private bool _enabled; // 是否处于建造模式（中文注释）
+        private bool _hotbarDriven; // 是否由快捷栏驱动建造模式（中文注释）
+        private bool _inputEnabled = true; // 输入是否启用（背包/容器打开时为false）（中文注释）
         private UCamera _camera; // 当前使用的摄像机（中文注释）
 
         private GameObject _ghostInstance; // 预览物体实例（中文注释）
@@ -53,12 +58,29 @@ namespace WF.Gameplay.Systems.Building
 
             AcquireCamera();
             SetBuildMode(false);
+            SyncSelectionFromHotbar();
+        }
+
+        private void OnEnable() // 订阅快捷栏事件以驱动建造模式（中文注释）
+        {
+            EventBus.Subscribe<HotbarSelectionChangedEvent>(OnHotbarSelectionChanged);
+            EventBus.Subscribe<HotbarUpdatedEvent>(OnHotbarUpdated);
+            EventBus.Subscribe<InputStateChangedEvent>(OnInputStateChanged);
+        }
+
+        private void OnDisable() // 取消订阅快捷栏事件（中文注释）
+        {
+            EventBus.Unsubscribe<HotbarSelectionChangedEvent>(OnHotbarSelectionChanged);
+            EventBus.Unsubscribe<HotbarUpdatedEvent>(OnHotbarUpdated);
+            EventBus.Unsubscribe<InputStateChangedEvent>(OnInputStateChanged);
         }
 
         // 处理建造模式输入与预览/放置（中文注释）
         private void Update()
         {
-            if (Input.GetKeyDown(toggleKey))
+            if (!_inputEnabled) return;
+
+            if (!_hotbarDriven && Input.GetKeyDown(toggleKey))
             {
                 SetBuildMode(!_enabled);
             }
@@ -90,6 +112,80 @@ namespace WF.Gameplay.Systems.Building
                 {
                     gridSystem.TryPlace(selectedBuilding, cell, _rotation, surfaceMask, out _);
                 }
+            }
+        }
+
+        private void OnInputStateChanged(InputStateChangedEvent e) // 背包/容器打开时禁用建造输入（中文注释）
+        {
+            _inputEnabled = e.InputEnabled;
+            if (!_inputEnabled)
+            {
+                SetBuildMode(false);
+                return;
+            }
+
+            SyncSelectionFromHotbar();
+        }
+
+        private void OnHotbarSelectionChanged(HotbarSelectionChangedEvent e) // 快捷栏选中变化时同步建造选择（中文注释）
+        {
+            SyncSelectionFromHotbar();
+        }
+
+        private void OnHotbarUpdated(HotbarUpdatedEvent e) // 快捷栏内容变化时同步建造选择（中文注释）
+        {
+            SyncSelectionFromHotbar();
+        }
+
+        private void SyncSelectionFromHotbar() // 从快捷栏当前选中槽位同步建筑定义与模式开关（中文注释）
+        {
+            if (HotbarSystem.Instance == null) return;
+
+            var stack = HotbarSystem.Instance.Get(HotbarSystem.Instance.SelectedIndex);
+            bool isBuilding = stack != null &&
+                              stack.Item != null &&
+                              (stack.Type == ItemType.Building || (stack.Item.Tags & ItemTag.Building) != 0);
+            if (!isBuilding)
+            {
+                if (_hotbarDriven)
+                {
+                    _hotbarDriven = false;
+                    selectedBuilding = null;
+                    SetBuildMode(false);
+                }
+                return;
+            }
+
+            var buildingItem = stack.Item as BuildingItem;
+            var nextDefinition = buildingItem != null ? buildingItem.BuildingDefinition : null;
+            if (nextDefinition == null)
+            {
+                if (_hotbarDriven)
+                {
+                    _hotbarDriven = false;
+                    selectedBuilding = null;
+                    SetBuildMode(false);
+                }
+                return;
+            }
+
+            bool changed = selectedBuilding != nextDefinition;
+            selectedBuilding = nextDefinition;
+            _hotbarDriven = true;
+
+            if (changed)
+            {
+                _rotation = GridRotation.R0;
+                ClearGhostPreview();
+            }
+
+            if (_inputEnabled)
+            {
+                SetBuildMode(true);
+            }
+            else
+            {
+                SetBuildMode(false);
             }
         }
 

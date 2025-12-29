@@ -13,9 +13,9 @@
 | `HotbarSlot.cs` | `HotbarSlot` | 快捷栏槽位组件（选中背景引用） | ✅ |
 | `CrosshairController.cs` | `CrosshairController` | 准星跟随与偏移反馈 | ✅ |
 | `StaminaHUDController.cs` | `StaminaHUDController` | 体力条材质驱动填充与显隐 | ✅ |
+| `TooltipsPanelController.cs` | `TooltipsPanelController` | HUD提示面板：读条与哈奇最爱物品提示 | ✅ |
 
 ## 对外接口/依赖
 - **依赖的模块**: `Core/Events`, `Systems/Player`, `Systems/InventorySystem`
 - **对外提供的接口**:
   - `CrosshairController.SetExternalOffset()`
-

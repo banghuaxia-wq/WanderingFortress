@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0f784445a05b44cb55fb31c991214e, type: 3}
+  m_Name: Bear
+  m_EditorClassIdentifier: 
+  hatchName: "\u62CD\u62CD\u718A"
+  type: 0
+  modelPrefab: {fileID: 919132149155446097, guid: e9d8df8f14fcd8443b5fd130a1223d08,
+    type: 3}
+  preferredItem: {fileID: 11400000, guid: d04ad380b5fadc546a1487d0f192662d, type: 2}
+  tameCost: 20
+  tameMethod: 0
+  maxHealth: 30
+  maxStun: 40
+  stunDecayRate: 10
+  stunAutoIncreaseRate: 0
+  moveSpeed: 3.5
+  attackRange: 8
+  attackInterval: 2.5
+  attackDamage: 5
+  projectilePrefab: {fileID: 0}
+  projectileSpeed: 15
+  projectileLifetime: 4
+  animatorController: {fileID: 0}
+  idleClip: {fileID: 0}
+  walkClip: {fileID: 0}
+  stunClip: {fileID: 0}
+  attackClip: {fileID: 0}

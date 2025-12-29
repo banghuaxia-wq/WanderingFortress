@@ -654,6 +654,7 @@ GameObject:
   - component: {fileID: 7725055001896769571}
   - component: {fileID: 659677592642135028}
   - component: {fileID: 3712220305599273632}
+  - component: {fileID: -1793322265597524838}
   m_Layer: 5
   m_Name: PackageUISlot
   m_TagString: Untagged
@@ -725,3 +726,26 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &-1793322265597524838
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7496086836978826856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6dd91b172dbfb247ade6917bace0aca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  icon: {fileID: 0}
+  iconBackground: {fileID: 0}
+  countText: {fileID: 0}
+  numberText: {fileID: 0}
+  numberBackground: {fileID: 0}
+  selectedBackground: {fileID: 0}
+  slotType: 0
+  sourceType: 0
+  containerId: 
+  index: 0
+  dragCanvas: {fileID: 0}

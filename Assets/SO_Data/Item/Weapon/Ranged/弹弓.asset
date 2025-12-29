@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb39de2771d337a42b2987eac63f8817, type: 3}
+  m_Name: "\u5F39\u5F13"
+  m_EditorClassIdentifier: 
+  itemId: "\u5F39\u5F13"
+  displayName: 
+  type: 2
+  tags: 5
+  rarity: 0
+  icon: {fileID: 21300000, guid: e6a652a14448c9842abd0aeaa7a765b0, type: 3}
+  weight: 0
+  description: 
+  defaultTypeApplied: 1
+  slotType: 7
+  category: 2
+  attackData:
+    Type: 0
+    Damage: 0
+    AttackSpeed: 0
+    Range: 0
+    Cooldown: 0
+    Cost:
+      AmmoItemId: 
+      AmmoCount: 0
+      StaminaCost: 0
+    StunValue: 0
+    ProjectilePrefab: {fileID: 0}
+    ProjectileCount: 1
+    SpreadAngle: 0
+    ProjectileSpeed: 50
+    ProjectileLifetime: 5
+    NoiseRadius: 0
+    NoiseType: 2
+    VerticalRecoil: 0
+    HorizontalRecoil: 0
+    RecoilDecay: 0
+  maxAmmo: 0
+  attackBehavior: {fileID: 0}

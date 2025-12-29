@@ -39,7 +39,7 @@ namespace WF.Gameplay.Systems.Inventory.Items.Weapons
         protected override void OnValidate()
         {
             base.OnValidate();
-            SetType(ItemType.Weapon);
+            SetDefaultType(ItemType.Weapon);
         }
         
         protected virtual void OnEnable()

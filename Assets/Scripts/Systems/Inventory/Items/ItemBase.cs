@@ -14,6 +14,7 @@ namespace WF.Gameplay.Systems.Inventory.Items
         [SerializeField] private Sprite icon;
         [SerializeField] private float weight;
         [TextArea] [SerializeField] private string description;
+        [SerializeField] private bool defaultTypeApplied;
 
         public string ItemId => itemId;
         public string DisplayName => displayName;
@@ -31,6 +32,13 @@ namespace WF.Gameplay.Systems.Inventory.Items
         {
             type = value;
             tags |= MapTypeToTags(value);
+            defaultTypeApplied = true;
+        }
+
+        protected void SetDefaultType(ItemType value)
+        {
+            if (defaultTypeApplied) return;
+            SetType(value);
         }
 
         public bool HasTag(ItemTag tag)
@@ -42,6 +50,7 @@ namespace WF.Gameplay.Systems.Inventory.Items
         protected virtual void OnValidate()
         {
             if (string.IsNullOrEmpty(itemId)) itemId = name;
+            tags |= MapTypeToTags(type);
         }
 
         private static ItemTag MapTypeToTags(ItemType itemType)
@@ -64,6 +73,14 @@ namespace WF.Gameplay.Systems.Inventory.Items
                     return ItemTag.Ammo;
                 case ItemType.Throwable:
                     return ItemTag.Throwable;
+                case ItemType.Food:
+                    return ItemTag.Food;
+                case ItemType.Building:
+                    return ItemTag.Building;
+                case ItemType.Facility:
+                    return ItemTag.Facility;
+                case ItemType.Fuel:
+                    return ItemTag.Fuel;
                 default:
                     return ItemTag.None;
             }

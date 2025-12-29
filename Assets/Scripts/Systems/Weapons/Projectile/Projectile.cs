@@ -117,6 +117,15 @@ namespace WF.Gameplay.Systems.Weapons.Projectile
                     var dmg = other.GetComponent<IDamageable>() ?? other.GetComponentInParent<IDamageable>();
                     if (dmg != null)
                     {
+                        if (_payload != null && _payload.Source != null)
+                        {
+                            var sourceTransform = _payload.Source.transform;
+                            if (other.transform == sourceTransform || other.transform.IsChildOf(sourceTransform)) return;
+                            var sourceRoot = sourceTransform.root != null ? sourceTransform.root.gameObject : _payload.Source;
+                            var otherRoot = other.transform.root != null ? other.transform.root.gameObject : other.gameObject;
+                            if (sourceRoot != null && otherRoot != null && sourceRoot.layer == otherRoot.layer) return;
+                        }
+
                         dmg.TakeDamage(_payload);
                         ReturnToPool();
                         return;

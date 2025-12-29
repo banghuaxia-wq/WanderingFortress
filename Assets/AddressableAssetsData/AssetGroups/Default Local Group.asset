@@ -22,13 +22,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3f57f2f2d98dbe04d803e00f52bf7871
-    m_Address: Wood
+  - m_GUID: 3c89aa21a3b8d7940bee13c96101f7b7
+    m_Address: Assets/SO_Data/SimulationRange/SimulationRangeConfig.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: edc08f82dac5e124ab27f55a62f62dfa
-    m_Address: Hedgehog
+  - m_GUID: b88d774db22e3bb46b74d80b8d6a77d8
+    m_Address: "Assets/SO_Data/Item/Ammo/\u52A3\u8D28\u6B65\u67AA\u5B50\u5F39.asset"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac580608cf974b74ab5c5423165e5489
+    m_Address: "Assets/SO_Data/Item/Ammo/\u6807\u51C6\u6B65\u67AA\u5B50\u5F39.asset"
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4254b47bd8f48442b6d21d76ef2fe1b, type: 3}
+  m_Name: "\u94C1\u5236\u96F6\u4EF6"
+  m_EditorClassIdentifier: 
+  itemId: "\u94C1\u5236\u96F6\u4EF6"
+  displayName: 
+  type: 4
+  tags: 16
+  rarity: 0
+  icon: {fileID: 21300000, guid: 1b3ebee09ed8e9c4696392196e968af3, type: 3}
+  weight: 0
+  description: 
+  defaultTypeApplied: 1
+  maxStack: 99

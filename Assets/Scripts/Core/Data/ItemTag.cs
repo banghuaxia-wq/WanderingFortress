@@ -14,7 +14,10 @@ namespace WF.Gameplay.Core.Data
         Quest = 1 << 5,
         Ammo = 1 << 6,
         Throwable = 1 << 7,
-        Fuel = 1 << 8
+        Fuel = 1 << 8,
+        Food = 1 << 9,
+        Building = 1 << 10,
+        Facility = 1 << 11
     }
 }
 

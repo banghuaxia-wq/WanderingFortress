@@ -45,9 +45,19 @@ namespace WF.Gameplay.Systems.InventorySystem
             {
                 if (item.Item != null)
                 {
-                    // Allow weapons and consumables
-                    // Or check specific interfaces
-                    if (!(item.Item is IConsumable) && item.Type != ItemType.Weapon)
+                    var tags = item.Item.Tags;
+                    bool allowedByType =
+                        item.Type == ItemType.Weapon ||
+                        item.Type == ItemType.Tool ||
+                        item.Type == ItemType.Consumable ||
+                        item.Type == ItemType.Throwable ||
+                        item.Type == ItemType.Food ||
+                        item.Type == ItemType.Building ||
+                        item.Type == ItemType.Facility;
+                    bool allowedByTag = (tags & (ItemTag.Weapon | ItemTag.Tool | ItemTag.Consumable | ItemTag.Throwable | ItemTag.Food | ItemTag.Building | ItemTag.Facility)) != 0;
+                    bool allowedByInterface = item.Item is IConsumable;
+
+                    if (!allowedByType && !allowedByTag && !allowedByInterface)
                     {
                         return false;
                     }
@@ -55,7 +65,14 @@ namespace WF.Gameplay.Systems.InventorySystem
                 else
                 {
                     // Legacy fallback
-                    if (!item.IsUsable && item.Type != ItemType.Weapon && item.Type != ItemType.Consumable) return false;
+                    if (!item.IsUsable &&
+                        item.Type != ItemType.Weapon &&
+                        item.Type != ItemType.Tool &&
+                        item.Type != ItemType.Consumable &&
+                        item.Type != ItemType.Throwable &&
+                        item.Type != ItemType.Food &&
+                        item.Type != ItemType.Building &&
+                        item.Type != ItemType.Facility) return false;
                 }
             }
             

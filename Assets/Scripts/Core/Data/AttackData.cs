@@ -20,6 +20,10 @@ namespace WF.Gameplay.Core.Data
         public float ProjectileSpeed = 50f;
         public float ProjectileLifetime = 5f;
 
+        // Sound
+        public float NoiseRadius = 0f; // 攻击噪声半径（用于吸引敌人）（中文注释）
+        public SoundType NoiseType = SoundType.Combat; // 噪声类型（中文注释）
+
         // Recoil
         public float VerticalRecoil;
         public float HorizontalRecoil;

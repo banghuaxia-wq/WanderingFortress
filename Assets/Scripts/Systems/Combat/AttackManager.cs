@@ -1,4 +1,5 @@
 using UnityEngine;
+using WF.Gameplay.Core.Events;
 using WF.Gameplay.Core.Interfaces;
 
 namespace WF.Gameplay.Systems.Combat
@@ -24,9 +25,20 @@ namespace WF.Gameplay.Systems.Combat
             if (!weapon.AttackBehavior.CanExecute(owner, weapon, weapon.AttackData)) return false;
             
             weapon.AttackBehavior.Execute(owner, weapon, weapon.AttackData, aimDirection, origin);
+
+            PublishAttackSound(owner, weapon.AttackData, origin);
             
             _nextAttackTime = Time.time + weapon.AttackData.Cooldown;
             return true;
+        }
+
+        private void PublishAttackSound(GameObject owner, WF.Gameplay.Core.Data.AttackData data, Vector3? origin)
+        {
+            if (data == null) return;
+            if (data.NoiseRadius <= 0.001f) return;
+
+            Vector3 pos = origin.HasValue ? origin.Value : (owner != null ? owner.transform.position : Vector3.zero);
+            EventBus.Publish(new SoundEmittedEvent(pos, data.NoiseRadius, data.NoiseType, owner));
         }
     }
 }

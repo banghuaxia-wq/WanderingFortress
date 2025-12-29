@@ -20,8 +20,7 @@ namespace WF.Gameplay.Systems.Inventory.Items
         protected override void OnValidate()
         {
             base.OnValidate();
-            SetType(ItemType.Material);
+            SetDefaultType(ItemType.Material);
         }
     }
 }
-

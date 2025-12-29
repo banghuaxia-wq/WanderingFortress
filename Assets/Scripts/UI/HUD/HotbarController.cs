@@ -309,6 +309,11 @@ namespace WF.Gameplay.UI.HUD
             var layoutElement = indicator.GetComponent<LayoutElement>();
             if (layoutElement == null) layoutElement = indicator.gameObject.AddComponent<LayoutElement>();
             layoutElement.ignoreLayout = true;
+
+            var canvasGroup = indicator.GetComponent<CanvasGroup>();
+            if (canvasGroup == null) canvasGroup = indicator.gameObject.AddComponent<CanvasGroup>();
+            canvasGroup.blocksRaycasts = false;
+            canvasGroup.interactable = false;
         }
 
         private void HideAllSlotSelectedBackgrounds()

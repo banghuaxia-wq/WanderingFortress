@@ -1,4 +1,6 @@
 using UnityEngine;
+using WF.Gameplay.Core.Data;
+using WF.Gameplay.Core.Events;
 using WF.Gameplay.Systems.Player;
 using WF.Gameplay.Systems.Camera;
 using UCamera = UnityEngine.Camera;
@@ -44,6 +46,13 @@ public class PlayerMove : MonoBehaviour
     [Header("Shooting Settings")]
     [SerializeField] private float shootingWalkSpeed = 3.5f;
 
+    [Header("Footstep Sound")]
+    [SerializeField] private bool emitFootstepSound = true; // 是否发布脚步声事件（中文注释）
+    [SerializeField] private float footstepNoiseRadiusWalk = 3f; // 行走脚步声传播半径（中文注释）
+    [SerializeField] private float footstepNoiseRadiusRun = 5f; // 奔跑脚步声传播半径（中文注释）
+    [SerializeField] private float footstepIntervalWalk = 0.55f; // 行走脚步声间隔（秒）（中文注释）
+    [SerializeField] private float footstepIntervalRun = 0.35f; // 奔跑脚步声间隔（秒）（中文注释）
+
     // 私有状态变量
     // 是否处于冲刺状态
     private bool _isSprinting = false; 
@@ -65,6 +74,7 @@ public class PlayerMove : MonoBehaviour
     // 游戏主摄像机
     private UCamera _gameplayCamera;
     private bool _inputEnabled = true;
+    private float _nextFootstepSoundTime; // 下一次脚步声触发时间（中文注释）
 
     /// <summary>
     /// 初始化组件引用和默认值。
@@ -72,6 +82,7 @@ public class PlayerMove : MonoBehaviour
     void Awake()
     {
         _rb = GetComponent<Rigidbody>();
+        _rb.constraints |= RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
         _animator = GetComponent<Animator>(); // <-- 获取 Animator 组件
         _currentSpeed = walkSpeed;
 
@@ -205,6 +216,21 @@ public class PlayerMove : MonoBehaviour
     /// </summary>
     void FixedUpdate()
     {
+        if (!_inputEnabled)
+        {
+            if (_rb != null)
+            {
+                _rb.velocity = new Vector3(0f, _rb.velocity.y, 0f);
+                _rb.angularVelocity = Vector3.zero;
+            }
+            if (_animator != null)
+            {
+                _animator.SetFloat(MovementSpeedHash, 0f);
+                _animator.SetBool(IsRunningHash, false);
+            }
+            return;
+        }
+
         // ========================
         // 1. 物理运动处理
         // ========================
@@ -217,6 +243,7 @@ public class PlayerMove : MonoBehaviour
         
         // 应用速度
         _rb.velocity = new Vector3(targetVelocity.x, _rb.velocity.y, targetVelocity.z);
+        _rb.angularVelocity = Vector3.zero;
 
         Vector3 desiredDirection = Vector3.zero;
 
@@ -286,6 +313,18 @@ public class PlayerMove : MonoBehaviour
             // 如果速度大于步行速度 (例如 walkSpeed - 1.0f)，并且正在移动，则设置为奔跑状态
             // 或者直接使用你代码中的 _isSprinting 变量
             _animator.SetBool(IsRunningHash, _isSprinting);
+        }
+
+        if (emitFootstepSound && !_isRolling && _isMoving && Time.time >= _nextFootstepSoundTime)
+        {
+            float interval = _isSprinting ? footstepIntervalRun : footstepIntervalWalk;
+            float radius = _isSprinting ? footstepNoiseRadiusRun : footstepNoiseRadiusWalk;
+            _nextFootstepSoundTime = Time.time + Mathf.Max(0.05f, interval);
+
+            if (radius > 0.001f)
+            {
+                EventBus.Publish(new SoundEmittedEvent(transform.position, radius, SoundType.Footstep, gameObject));
+            }
         }
     }
 

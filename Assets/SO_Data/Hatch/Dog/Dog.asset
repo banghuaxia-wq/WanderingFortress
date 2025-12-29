@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0f784445a05b44cb55fb31c991214e, type: 3}
+  m_Name: Dog
+  m_EditorClassIdentifier: 
+  hatchName: "\u76D1\u5DE5\u72D7"
+  type: 0
+  modelPrefab: {fileID: 919132149155446097, guid: f40f7201ec4d6c5459dfdb36ffacc47a,
+    type: 3}
+  preferredItem: {fileID: 11400000, guid: 06f6517d505437e47846f64e19484937, type: 2}
+  tameCost: 8
+  tameMethod: 0
+  maxHealth: 30
+  maxStun: 40
+  stunDecayRate: 10
+  stunAutoIncreaseRate: 0
+  moveSpeed: 3.5
+  attackRange: 8
+  attackInterval: 2.5
+  attackDamage: 5
+  projectilePrefab: {fileID: 0}
+  projectileSpeed: 15
+  projectileLifetime: 4
+  animatorController: {fileID: 9100000, guid: daf95aef81ee10144830db31864c2344, type: 2}
+  idleClip: {fileID: 0}
+  walkClip: {fileID: 0}
+  stunClip: {fileID: 0}
+  attackClip: {fileID: 0}

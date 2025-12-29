@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0f784445a05b44cb55fb31c991214e, type: 3}
+  m_Name: Hedgehog
+  m_EditorClassIdentifier: 
+  hatchName: "\u523A\u523A"
+  type: 0
+  modelPrefab: {fileID: 8540214952883440563, guid: afcd96cbec0375248833c51691ec4e9d,
+    type: 3}
+  preferredItem: {fileID: 11400000, guid: 4bde67e811adf7949a472f659692ee6d, type: 2}
+  tameCost: 4
+  tameMethod: 0
+  maxHealth: 30
+  maxStun: 40
+  stunDecayRate: 10
+  stunAutoIncreaseRate: 0
+  moveSpeed: 3.5
+  attackRange: 8
+  attackInterval: 2.5
+  attackDamage: 5
+  projectilePrefab: {fileID: 0}
+  projectileSpeed: 15
+  projectileLifetime: 4
+  animatorController: {fileID: 9100000, guid: 3b08efa61cf156a479ae82660d3cd7fb, type: 2}
+  idleClip: {fileID: 0}
+  walkClip: {fileID: 0}
+  stunClip: {fileID: 0}
+  attackClip: {fileID: 0}

@@ -41,6 +41,22 @@ namespace WF.Gameplay.Core.Events
         public WeightChangedEvent(float w, bool o1, bool o2) { Weight = w; IsOverweight = o1; IsOverloaded = o2; }
     }
 
+    // 声音相关事件（用于听觉感知）（中文注释）
+    public struct SoundEmittedEvent
+    {
+        public UnityEngine.Vector3 Position; // 声音发生位置（中文注释）
+        public float Radius; // 声音传播半径（中文注释）
+        public SoundType Type; // 声音类型（中文注释）
+        public UnityEngine.GameObject Source; // 声音来源对象（可为空）（中文注释）
+        public SoundEmittedEvent(UnityEngine.Vector3 position, float radius, SoundType type, UnityEngine.GameObject source)
+        {
+            Position = position;
+            Radius = radius;
+            Type = type;
+            Source = source;
+        }
+    }
+
     // 物品相关事件
     public struct ItemUsedEvent
     {

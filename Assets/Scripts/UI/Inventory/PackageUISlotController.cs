@@ -35,12 +35,27 @@ namespace WF.Gameplay.UI.Inventory
             ResolveOptionalReferences();
             ApplySlotTypeVisuals();
             SetSelected(false);
+
+            var graphic = GetComponent<Graphic>();
+            if (graphic == null)
+            {
+                var img = gameObject.AddComponent<Image>();
+                img.color = new Color(1f, 1f, 1f, 0f);
+                img.raycastTarget = true;
+            }
+            else
+            {
+                graphic.raycastTarget = true;
+            }
         }
 
         private void OnEnable() // 对象池复用时重置选中态（中文注释）
         {
             ApplySlotTypeVisuals();
             SetSelected(false);
+
+            var graphic = GetComponent<Graphic>();
+            if (graphic != null) graphic.raycastTarget = true;
         }
 
         public void Bind(ItemStack stack)
@@ -54,13 +69,21 @@ namespace WF.Gameplay.UI.Inventory
             
             if (stack == null || stack.Item == null)
             {
-                if (icon != null) icon.enabled = false;
+                if (icon != null)
+                {
+                    icon.sprite = null;
+                    icon.enabled = false;
+                }
+                if (iconBackground != null)
+                {
+                    iconBackground.enabled = false;
+                    if (iconBackground.gameObject.activeSelf) iconBackground.gameObject.SetActive(false);
+                }
                 if (countText != null)
                 {
                     countText.text = "";
                     countText.gameObject.SetActive(false);
                 }
-                ApplyRarityVisuals(null);
                 _boundItem = null;
                 _boundCount = 0;
                 return;
@@ -68,6 +91,11 @@ namespace WF.Gameplay.UI.Inventory
             
             _boundItem = stack.Item;
             _boundCount = stack.Count;
+            if (iconBackground != null)
+            {
+                if (!iconBackground.gameObject.activeSelf) iconBackground.gameObject.SetActive(true);
+                iconBackground.enabled = true;
+            }
             if (icon != null) 
             { 
                 icon.enabled = true; 

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd0ce809b26f7174f8d5b23abf363789, type: 3}
+  m_Name: "\u94A2\u5236\u6355\u517D\u5939"
+  m_EditorClassIdentifier: 
+  itemId: "\u94A2\u5236\u6355\u517D\u5939"
+  displayName: 
+  type: 9
+  tags: 1025
+  rarity: 0
+  icon: {fileID: 21300000, guid: f2d6ff42d2fb31c4b978aec0339109ce, type: 3}
+  weight: 0
+  description: 
+  defaultTypeApplied: 1
+  maxStack: 10
+  buildingDefinition: {fileID: 11400000, guid: 68708f456b78ba94d9d2862ca01c547f, type: 2}
