@@ -4,6 +4,8 @@ using UnityEngine.EventSystems;
 using TMPro;
 using WF.Gameplay.Core.Data;
 using WF.Gameplay.Core.Interfaces;
+using WF.Gameplay.Core.Utilities.Pooling;
+using WF.Gameplay.Systems.Inventory;
 using WF.Gameplay.Systems.Inventory.Items;
 using WF.Gameplay.Systems.InventorySystem;
 
@@ -27,6 +29,9 @@ namespace WF.Gameplay.UI.Inventory
         private RectTransform _rect; // 本对象RectTransform缓存（中文注释）
         private IItem _boundItem;
         private int _boundCount;
+        private bool _discardOnEndDrag;
+        private ScrollRect[] _scrollRectsDuringDrag;
+        private bool[] _scrollRectsEnabledBeforeDrag;
 
         private void Awake() // 初始化引用并默认隐藏选中态（中文注释）
         {
@@ -67,6 +72,15 @@ namespace WF.Gameplay.UI.Inventory
             ResolveOptionalReferences();
             SetSelected(false);
             
+            if (stack != null && stack.Item == null && !string.IsNullOrEmpty(stack.Id))
+            {
+                var hydrated = ItemFactory.CreateItemStack(stack.Id, stack.Count);
+                if (hydrated != null && hydrated.Item != null)
+                {
+                    stack.Item = hydrated.Item;
+                }
+            }
+
             if (stack == null || stack.Item == null)
             {
                 if (icon != null)
@@ -134,6 +148,8 @@ namespace WF.Gameplay.UI.Inventory
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (_boundItem == null) return;
+            _discardOnEndDrag = false;
+            DisableParentScrollRects();
 
             // 可选：禁用自身射线以便投递到目标
             var cg = GetComponent<CanvasGroup>();
@@ -154,6 +170,22 @@ namespace WF.Gameplay.UI.Inventory
 
         public void OnEndDrag(PointerEventData eventData)
         {
+            RestoreParentScrollRects();
+
+            if (_discardOnEndDrag)
+            {
+                var po = GetComponent<PooledObject>();
+                if (po != null && PoolManager.Instance != null)
+                {
+                    PoolManager.Instance.Release(gameObject);
+                }
+                else
+                {
+                    Destroy(gameObject);
+                }
+                return;
+            }
+
             var cg = GetComponent<CanvasGroup>();
             if (cg != null) cg.blocksRaycasts = true;
             if (_rect != null && _originalParent != null)
@@ -161,6 +193,34 @@ namespace WF.Gameplay.UI.Inventory
                 _rect.SetParent(_originalParent, true);
                 _rect.SetSiblingIndex(_originalSibling);
             }
+        }
+
+        private void DisableParentScrollRects()
+        {
+            _scrollRectsDuringDrag = GetComponentsInParent<ScrollRect>(true);
+            if (_scrollRectsDuringDrag == null || _scrollRectsDuringDrag.Length == 0) return;
+            _scrollRectsEnabledBeforeDrag = new bool[_scrollRectsDuringDrag.Length];
+            for (int i = 0; i < _scrollRectsDuringDrag.Length; i++)
+            {
+                var sr = _scrollRectsDuringDrag[i];
+                if (sr == null) continue;
+                _scrollRectsEnabledBeforeDrag[i] = sr.enabled;
+                sr.enabled = false;
+            }
+        }
+
+        private void RestoreParentScrollRects()
+        {
+            if (_scrollRectsDuringDrag == null || _scrollRectsDuringDrag.Length == 0) return;
+            for (int i = 0; i < _scrollRectsDuringDrag.Length; i++)
+            {
+                var sr = _scrollRectsDuringDrag[i];
+                if (sr == null) continue;
+                bool wasEnabled = _scrollRectsEnabledBeforeDrag != null && i < _scrollRectsEnabledBeforeDrag.Length && _scrollRectsEnabledBeforeDrag[i];
+                sr.enabled = wasEnabled;
+            }
+            _scrollRectsDuringDrag = null;
+            _scrollRectsEnabledBeforeDrag = null;
         }
 
         public void OnDrag(PointerEventData eventData)
@@ -285,7 +345,21 @@ namespace WF.Gameplay.UI.Inventory
             };
             var transferSystem = InventoryTransferSystem.Instance;
             if (transferSystem == null) return;
-            transferSystem.TryTransfer(req);
+            bool ok = transferSystem.TryTransfer(req);
+            if (ok && ShouldDiscardAfterTransfer(req))
+            {
+                srcSlot._discardOnEndDrag = true;
+            }
+        }
+
+        private static bool ShouldDiscardAfterTransfer(TransferRequest req)
+        {
+            if (req == null) return false;
+            if (req.From == TransferSource.Box && req.To == TransferSource.Package) return true;
+            if (req.From == TransferSource.Package && req.To == TransferSource.Box) return true;
+            if (req.From == TransferSource.Package && req.To == TransferSource.Equipment) return true;
+            if (req.From == TransferSource.Equipment && req.To == TransferSource.Package) return true;
+            return false;
         }
     }
 }

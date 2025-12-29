@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 682c0dc59340a5b419fb4b4d3dc50001, type: 3}
+  m_Name: TestLootConfig
+  m_EditorClassIdentifier: 
+  mappings:
+  - ContainerType: 2
+    LootTable: {fileID: 11400000, guid: f5c25e1cb4cb07f46ae8e03544c2bea8, type: 2}

@@ -23,6 +23,18 @@ namespace WF.Gameplay.Systems.ContainerSystem
 
         public static void FillContainerWithLoot(ContainerData container, LootTableSO table, float luck, int seed = 0, float luckSoftCap = 0.75f)
         {
+            FillContainerWithLoot(container, table, luck, seed, luckSoftCap, 1, 1f);
+        }
+
+        public static void FillContainerWithLoot(
+            ContainerData container,
+            LootTableSO table,
+            float luck,
+            int seed,
+            float luckSoftCap,
+            int zoneLevel,
+            float zoneLuckSensitivity)
+        {
             if (container == null || table == null) return;
             if (container.SlotLimit > 0 && container.Items.Count >= container.SlotLimit) return;
 
@@ -32,7 +44,7 @@ namespace WF.Gameplay.Systems.ContainerSystem
             int remainingSlots = GetRemainingSlots(container);
             if (remainingSlots <= 0) return;
 
-            var generated = GenerateLoot(table, luck, rng, picked, table.MaxNestingDepth, luckSoftCap, remainingSlots);
+            var generated = GenerateLoot(table, luck, rng, picked, table.MaxNestingDepth, luckSoftCap, remainingSlots, zoneLevel, zoneLuckSensitivity);
             if (generated.Count <= 0) return;
 
             for (int i = 0; i < generated.Count; i++)
@@ -55,10 +67,12 @@ namespace WF.Gameplay.Systems.ContainerSystem
             HashSet<string> pickedItemIds,
             int maxDepth,
             float luckSoftCap,
-            int maxItems)
+            int maxItems,
+            int zoneLevel,
+            float zoneLuckSensitivity)
         {
             var results = new List<ItemStack>();
-            GenerateLootInto(table, luck, rng, pickedItemIds, maxDepth, 0, luckSoftCap, maxItems, results);
+            GenerateLootInto(table, luck, rng, pickedItemIds, maxDepth, 0, luckSoftCap, maxItems, results, zoneLevel, zoneLuckSensitivity);
             return results;
         }
 
@@ -71,7 +85,9 @@ namespace WF.Gameplay.Systems.ContainerSystem
             int depth,
             float luckSoftCap,
             int maxItems,
-            List<ItemStack> results)
+            List<ItemStack> results,
+            int zoneLevel,
+            float zoneLuckSensitivity)
         {
             if (table == null || rng == null || results == null) return;
             if (depth > maxDepth) return;
@@ -85,13 +101,13 @@ namespace WF.Gameplay.Systems.ContainerSystem
                 if (results.Count >= maxItems) return;
                 var pickedTable = TryPickJackpotTable(table, rng) ?? table;
 
-                var entry = PickEntryLayered(pickedTable, luck, rng, pickedItemIds, luckSoftCap);
+                var entry = PickEntryLayered(pickedTable, luck, rng, pickedItemIds, luckSoftCap, zoneLevel, zoneLuckSensitivity);
                 if (entry == null) continue;
 
                 if (entry.Kind == LootEntryKind.Table)
                 {
                     if (entry.Table == null) continue;
-                    GenerateLootInto(entry.Table, luck, rng, pickedItemIds, maxDepth, depth + 1, luckSoftCap, maxItems, results);
+                    GenerateLootInto(entry.Table, luck, rng, pickedItemIds, maxDepth, depth + 1, luckSoftCap, maxItems, results, zoneLevel, zoneLuckSensitivity);
                     continue;
                 }
 
@@ -114,7 +130,14 @@ namespace WF.Gameplay.Systems.ContainerSystem
             return rng.NextDouble() < table.JackpotChance ? table.JackpotTable : null;
         }
 
-        private static LootEntry PickEntryLayered(LootTableSO table, float luck, System.Random rng, HashSet<string> pickedItemIds, float luckSoftCap)
+        private static LootEntry PickEntryLayered(
+            LootTableSO table,
+            float luck,
+            System.Random rng,
+            HashSet<string> pickedItemIds,
+            float luckSoftCap,
+            int zoneLevel,
+            float zoneLuckSensitivity)
         {
             if (table == null || rng == null) return null;
             var entries = table.Entries;
@@ -161,7 +184,7 @@ namespace WF.Gameplay.Systems.ContainerSystem
                     continue;
                 }
 
-                float w = ComputeEntryWeightWithinTier(table, e, luck, luckSoftCap);
+                float w = ComputeEntryWeightWithinTier(table, e, luck, luckSoftCap, zoneLevel, zoneLuckSensitivity);
                 entryWeights[i] = w;
                 entryTotal += w;
             }
@@ -171,17 +194,22 @@ namespace WF.Gameplay.Systems.ContainerSystem
             return pickedIndex >= 0 ? entries[pickedIndex] : null;
         }
 
-        private static float ComputeEntryWeightWithinTier(LootTableSO table, LootEntry entry, float luck, float luckSoftCap)
+        private static float ComputeEntryWeightWithinTier(
+            LootTableSO table,
+            LootEntry entry,
+            float luck,
+            float luckSoftCap,
+            int zoneLevel,
+            float zoneLuckSensitivity)
         {
             if (entry == null) return 0f;
             float baseWeight = Mathf.Max(0f, entry.BaseWeight);
             if (baseWeight <= 0f) return 0f;
 
-            float normalized = Tanh(luck * entry.LuckSensitivity);
-            float capped = Mathf.Clamp(normalized, -1f, 1f) * (0.25f * Mathf.Clamp01(luckSoftCap));
-            float multiplier = Mathf.Max(0.001f, 1f + capped);
-
-            float weight = baseWeight * multiplier;
+            float sensitivity = entry.LuckSensitivity * zoneLuckSensitivity;
+            int safeZoneLevel = Mathf.Max(1, zoneLevel);
+            float delta = luck * sensitivity * safeZoneLevel;
+            float weight = baseWeight + delta;
             float minWeight = table != null ? Mathf.Max(0f, table.MinEffectiveWeight) : 0f;
             return Mathf.Max(minWeight, weight);
         }

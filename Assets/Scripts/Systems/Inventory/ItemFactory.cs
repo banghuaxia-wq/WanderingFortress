@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using WF.Gameplay.Core.Data;
 using WF.Gameplay.Core.Interfaces;
 using WF.Gameplay.Systems.Inventory.Items;
@@ -15,6 +18,9 @@ namespace WF.Gameplay.Systems.Inventory
         public static ItemFactory Instance { get; private set; }
 
         private static readonly Dictionary<string, ItemBase> _itemCache = new Dictionary<string, ItemBase>();
+#if UNITY_EDITOR
+        private static Dictionary<string, ItemBase> _editorItemIdIndex;
+#endif
 
         private void Awake()
         {
@@ -75,29 +81,43 @@ namespace WF.Gameplay.Systems.Inventory
 
             try
             {
-                var addressablesType = Type.GetType("UnityEngine.AddressableAssets.Addressables, Unity.Addressables");
-                if (addressablesType == null) return null;
+                var addressablesType =
+                    Type.GetType("UnityEngine.AddressableAssets.Addressables, Unity.Addressables")
+                    ?? FindTypeInLoadedAssemblies("UnityEngine.AddressableAssets.Addressables");
+
+                if (addressablesType == null)
+                {
+                    return Resources.Load<T>(addressKey) ?? TryLoadFromEditorIndex<T>(addressKey);
+                }
 
                 var loadAssetAsync = FindLoadAssetAsyncGeneric(addressablesType);
-                if (loadAssetAsync == null) return null;
+                if (loadAssetAsync == null)
+                {
+                    return Resources.Load<T>(addressKey) ?? TryLoadFromEditorIndex<T>(addressKey);
+                }
 
                 var generic = loadAssetAsync.MakeGenericMethod(typeof(T));
                 var handle = generic.Invoke(null, new object[] { addressKey });
-                if (handle == null) return null;
+                if (handle == null)
+                {
+                    return Resources.Load<T>(addressKey) ?? TryLoadFromEditorIndex<T>(addressKey);
+                }
 
                 var handleType = handle.GetType();
                 var waitForCompletion = handleType.GetMethod("WaitForCompletion", BindingFlags.Public | BindingFlags.Instance);
                 if (waitForCompletion != null)
                 {
-                    return waitForCompletion.Invoke(handle, null) as T;
+                    var loaded = waitForCompletion.Invoke(handle, null) as T;
+                    return loaded != null ? loaded : (Resources.Load<T>(addressKey) ?? TryLoadFromEditorIndex<T>(addressKey));
                 }
 
                 var resultProp = handleType.GetProperty("Result", BindingFlags.Public | BindingFlags.Instance);
-                return resultProp?.GetValue(handle) as T;
+                var result = resultProp?.GetValue(handle) as T;
+                return result != null ? result : (Resources.Load<T>(addressKey) ?? TryLoadFromEditorIndex<T>(addressKey));
             }
             catch
             {
-                return null;
+                return Resources.Load<T>(addressKey) ?? TryLoadFromEditorIndex<T>(addressKey);
             }
         }
 
@@ -115,5 +135,62 @@ namespace WF.Gameplay.Systems.Inventory
             }
             return null;
         }
+
+        private static Type FindTypeInLoadedAssemblies(string fullName)
+        {
+            if (string.IsNullOrEmpty(fullName)) return null;
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            for (int i = 0; i < assemblies.Length; i++)
+            {
+                var asm = assemblies[i];
+                if (asm == null) continue;
+                var t = asm.GetType(fullName, false);
+                if (t != null) return t;
+            }
+            return null;
+        }
+
+        private static T TryLoadFromEditorIndex<T>(string addressKey) where T : UnityEngine.Object
+        {
+#if UNITY_EDITOR
+            if (typeof(T) != typeof(ItemBase)) return null;
+            if (string.IsNullOrEmpty(addressKey)) return null;
+
+            if (_editorItemIdIndex == null || _editorItemIdIndex.Count == 0)
+            {
+                RebuildEditorItemIdIndex();
+            }
+
+            if (_editorItemIdIndex != null && _editorItemIdIndex.TryGetValue(addressKey, out var item) && item != null)
+            {
+                return item as T;
+            }
+#endif
+            return null;
+        }
+
+#if UNITY_EDITOR
+        [UnityEditor.Callbacks.DidReloadScripts]
+        private static void OnScriptsReloaded()
+        {
+            _editorItemIdIndex = null;
+        }
+
+        private static void RebuildEditorItemIdIndex()
+        {
+            var index = new Dictionary<string, ItemBase>(StringComparer.Ordinal);
+            var guids = AssetDatabase.FindAssets("t:WF.Gameplay.Systems.Inventory.Items.ItemBase");
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                if (string.IsNullOrEmpty(path)) continue;
+                var item = AssetDatabase.LoadAssetAtPath<ItemBase>(path);
+                if (item == null) continue;
+                if (string.IsNullOrEmpty(item.ItemId)) continue;
+                if (!index.ContainsKey(item.ItemId)) index.Add(item.ItemId, item);
+            }
+            _editorItemIdIndex = index;
+        }
+#endif
     }
 }
