@@ -3284,7 +3284,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   equipmentSystem: {fileID: 5774976915452611295}
-  defaultUnarmedWeapon: {fileID: 0}
+  defaultUnarmedWeapon: {fileID: 11400000, guid: 280db98b5c1dffc44843730493e70aea, type: 2}
 --- !u!1 &6099001084309503738
 GameObject:
   m_ObjectHideFlags: 0

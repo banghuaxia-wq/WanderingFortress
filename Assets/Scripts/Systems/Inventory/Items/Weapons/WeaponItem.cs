@@ -30,6 +30,17 @@ namespace WF.Gameplay.Systems.Inventory.Items.Weapons
         {
             CurrentAmmo = Mathf.Max(0, CurrentAmmo - amount);
         }
+
+        protected void SetCategory(WeaponCategory value)
+        {
+            category = value;
+        }
+
+        protected override void OnValidate()
+        {
+            base.OnValidate();
+            SetType(ItemType.Weapon);
+        }
         
         protected virtual void OnEnable()
         {

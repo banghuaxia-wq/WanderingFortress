@@ -6,6 +6,26 @@ namespace WF.Gameplay.Systems.Combat.AttackBehaviors
 {
     public abstract class AttackBehaviorBase : ScriptableObject, IAttackBehavior
     {
+        protected bool TryTriggerAttackAnimation(GameObject owner, AttackType attackType)
+        {
+            if (owner == null) return false;
+
+            var driver = owner.GetComponentInChildren<IAnimationDriver>();
+            if (driver != null)
+            {
+                driver.SetAttackType(attackType);
+                driver.TriggerAttack();
+                return true;
+            }
+
+            var animator = owner.GetComponentInChildren<Animator>();
+            if (animator == null) return false;
+
+            animator.SetInteger("AttackType", (int)attackType);
+            animator.SetTrigger("Attack");
+            return true;
+        }
+
         public virtual bool CanExecute(GameObject owner, IWeaponItem weapon, AttackData data)
         {
             if (weapon == null || data == null) return false;

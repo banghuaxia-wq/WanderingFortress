@@ -1,4 +1,5 @@
 using UnityEngine;
+using WF.Gameplay.Core.Data;
 using WF.Gameplay.Core.Interfaces;
 
 namespace WF.Gameplay.Systems.Inventory.Items
@@ -24,6 +25,12 @@ namespace WF.Gameplay.Systems.Inventory.Items
         public bool CanStackWith(IItem other)
         {
             return other != null && other.ItemId == ItemId;
+        }
+
+        protected override void OnValidate()
+        {
+            base.OnValidate();
+            SetType(ItemType.Ammo);
         }
     }
 }

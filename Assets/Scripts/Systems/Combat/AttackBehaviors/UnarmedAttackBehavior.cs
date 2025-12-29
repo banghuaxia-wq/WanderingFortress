@@ -9,12 +9,7 @@ namespace WF.Gameplay.Systems.Combat.AttackBehaviors
     {
         public override void Execute(GameObject owner, IWeaponItem weapon, AttackData data, Vector3 aimDirection, Vector3? origin = null)
         {
-            // Trigger Animation
-            var animator = owner.GetComponent<Animator>();
-            if (animator != null)
-            {
-                animator.SetTrigger("Attack");
-            }
+            TryTriggerAttackAnimation(owner, data.Type);
             
             // Unarmed punch logic
         }

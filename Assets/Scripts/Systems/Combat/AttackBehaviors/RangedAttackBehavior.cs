@@ -26,12 +26,7 @@ namespace WF.Gameplay.Systems.Combat.AttackBehaviors
                     SpawnProjectile(owner, data, shotDirection, spawnPos);
                 }
                 
-                // Trigger Animation
-                var animator = owner.GetComponent<Animator>();
-                if (animator != null)
-                {
-                    animator.SetTrigger("Attack");
-                }
+                TryTriggerAttackAnimation(owner, data.Type);
             }
         }
 

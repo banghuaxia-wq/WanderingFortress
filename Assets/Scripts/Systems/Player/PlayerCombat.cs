@@ -96,9 +96,9 @@ namespace WF.Gameplay.Systems.Player
             if (data == null) return false;
             if (data.Type == AttackType.Ranged)
             {
-                return Input.GetButton(FireInputName);
+                return Input.GetButton(FireInputName) || Input.GetMouseButton(0);
             }
-            return Input.GetButtonDown(FireInputName);
+            return Input.GetButtonDown(FireInputName) || Input.GetMouseButtonDown(0);
         }
 
         private static bool CanAttackWhileSprinting(AttackData data) // 冲刺期间是否允许攻击（中文注释）

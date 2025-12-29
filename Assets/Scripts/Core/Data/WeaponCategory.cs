@@ -1,4 +1,4 @@
 namespace WF.Gameplay.Core.Data
 {
-    public enum WeaponCategory { Gun, Sword, Knife, Blunt, Unarmed }
+    public enum WeaponCategory { Unarmed, Melee, Ranged }
 }

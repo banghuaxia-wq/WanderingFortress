@@ -47,7 +47,7 @@ namespace WF.Gameplay.Systems.InventorySystem
                 {
                     // Allow weapons and consumables
                     // Or check specific interfaces
-                    if (!(item.Item is IConsumable) && item.Type != ItemType.Weapon && item.Type != ItemType.Gun && item.Type != ItemType.Melee)
+                    if (!(item.Item is IConsumable) && item.Type != ItemType.Weapon)
                     {
                         return false;
                     }

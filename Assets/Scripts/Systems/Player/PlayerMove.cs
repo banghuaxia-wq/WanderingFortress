@@ -145,7 +145,7 @@ public class PlayerMove : MonoBehaviour
             _isSprinting = false;
         }
         
-        _isShooting = Input.GetButton("Fire1");
+        _isShooting = Input.GetButton("Fire1") || Input.GetMouseButton(0);
         if (_isShooting)
         {
             _isSprinting = false;
