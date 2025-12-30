@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using WF.Gameplay.Core.Data;
@@ -14,14 +14,23 @@ namespace WF.Gameplay.Systems.Developer
 {
     public class DeveloperManager : MonoBehaviour
     {
+        [System.Serializable]
+        private class StartingItemEntry
+        {
+            public ItemBase itemAsset;
+            public int count = 1;
+        }
+
+        private static bool _startingItemsGrantedThisSession;
+
         [Header("Targets")]
         [SerializeField] private GameObject targetContainerObject;
         [SerializeField] private PlayerStats playerStats;
         [SerializeField] private BuffData buffAsset;
 
-        [Header("Pochie Spawn Settings")]
-        [Tooltip("用于测试生成的Pochie数据（SOPochie）")]
-        [SerializeField] private SOPochie devPochieData;
+        [Header("Hatch Spawn Settings")]
+        [Tooltip("用于测试生成的Hatch数据（SOHatch）")]
+        [SerializeField] private SOHatch devHatchData;
         [Tooltip("生成位置（为空则使用场景原点）")]
         [SerializeField] private Transform devSpawnPoint;
 
@@ -30,6 +39,11 @@ namespace WF.Gameplay.Systems.Developer
         [SerializeField] private string invItemId = "DevItem"; // Fallback ID
         [SerializeField] private int invItemCount = 1;
 
+        [Header("Starting Inventory")]
+        [SerializeField] private bool grantStartingItemsOnStart = true;
+        [SerializeField] private bool grantStartingItemsOnlyOnce = true;
+        [SerializeField] private List<StartingItemEntry> startingItems = new List<StartingItemEntry>();
+
         [Header("Container Item Settings")]
         [SerializeField] private ItemBase boxItemAsset;
         [SerializeField] private string boxItemId = "DevItem"; // Fallback ID
@@ -37,6 +51,42 @@ namespace WF.Gameplay.Systems.Developer
 
         [Header("Save Settings")]
         [SerializeField] private string saveFileName = "save.json";
+
+        private void Start()
+        {
+            if (grantStartingItemsOnStart)
+            {
+                GrantStartingItems();
+            }
+        }
+
+        [ContextMenu("Grant Starting Items")]
+        public void GrantStartingItems()
+        {
+            if (grantStartingItemsOnlyOnce && _startingItemsGrantedThisSession) return;
+
+            var inv = PlayerInventory.Instance;
+            if (inv == null)
+            {
+                Debug.LogWarning("PlayerInventory not found.");
+                return;
+            }
+
+            if (startingItems != null)
+            {
+                for (int i = 0; i < startingItems.Count; i++)
+                {
+                    var entry = startingItems[i];
+                    if (entry == null || entry.itemAsset == null) continue;
+                    int count = Mathf.Max(1, entry.count);
+                    var item = ItemFactory.CreateItemStack(entry.itemAsset, count);
+                    if (item == null) continue;
+                    inv.Add(item);
+                }
+            }
+
+            _startingItemsGrantedThisSession = true;
+        }
 
         [ContextMenu("Add Item To Container")]
         public void AddItemToContainer()
@@ -169,16 +219,17 @@ namespace WF.Gameplay.Systems.Developer
             Debug.Log("Loaded save.");
         }
 
-        [ContextMenu("Spawn Pochie For Test")]
-        public void SpawnPochieForTest()
+        [ContextMenu("Spawn Hatch For Test")]
+        public void SpawnHatchForTest()
         {
             var pos = devSpawnPoint != null ? devSpawnPoint.position : Vector3.zero;
             var rot = devSpawnPoint != null ? devSpawnPoint.rotation : Quaternion.identity;
-            var go = WF.Gameplay.Systems.Pochie.PochieFactory.CreateFromDataStatic(devPochieData, pos, rot);
+            var go = WF.Gameplay.Systems.Hatch.HatchService.EnsureInstance().SpawnFromData(devHatchData, pos, rot);
             if (go == null)
             {
-                Debug.LogWarning("SpawnPochieForTest 失败：未设置 Pochie 数据 或 工厂不可用。");
+                Debug.LogWarning("SpawnHatchForTest 失败：未设置 Hatch 数据 或 服务不可用。");
             }
         }
     }
 }
+

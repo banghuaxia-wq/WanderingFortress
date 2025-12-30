@@ -1,4 +1,5 @@
 using UnityEngine;
+using WF.Gameplay.Core.Data;
 using WF.Gameplay.Core.Interfaces;
 
 namespace WF.Gameplay.Systems.Inventory.Items.Weapons
@@ -6,6 +7,12 @@ namespace WF.Gameplay.Systems.Inventory.Items.Weapons
     [CreateAssetMenu(fileName = "NewRangedWeapon", menuName = "Items/Weapons/Ranged")]
     public class RangedWeaponItem : WeaponItem
     {
+        protected override void OnValidate()
+        {
+            base.OnValidate();
+            SetCategory(WeaponCategory.Ranged);
+        }
+
         public override void TryReload(IPlayerInventory inventory)
         {
             if (inventory == null || AttackData == null || string.IsNullOrEmpty(AttackData.Cost.AmmoItemId)) return;

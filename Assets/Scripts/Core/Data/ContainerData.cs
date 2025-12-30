@@ -8,5 +8,6 @@ namespace WF.Gameplay.Core.Data
         public ContainerType Type;
         public int SlotLimit;
         public List<ItemStack> Items = new List<ItemStack>();
+        public bool HasGeneratedLoot;
     }
 }

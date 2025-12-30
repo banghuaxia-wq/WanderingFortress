@@ -84,7 +84,7 @@ namespace WF.Gameplay.UI.HUD
             _modalOpen = anyOpen;
             if (crosshair != null) crosshair.gameObject.SetActive(!anyOpen);
             Cursor.visible = anyOpen;
-            Cursor.lockState = CursorLockMode.None;
+            Cursor.lockState = anyOpen ? CursorLockMode.None : CursorLockMode.Confined;
             
             EventBus.Publish(new InputStateChangedEvent(!anyOpen));
         }

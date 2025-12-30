@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 540203906306712356}
   - component: {fileID: 3517569704740760705}
   - component: {fileID: 1671992472687827019}
+  - component: {fileID: 2647179576729995663}
   m_Layer: 0
   m_Name: BollardEnd
   m_TagString: Untagged
@@ -25,6 +26,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 879574374187858334}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -32,7 +34,6 @@ Transform:
   m_Children:
   - {fileID: 7976039777908994381}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &3517569704740760705
 MeshFilter:
@@ -84,11 +85,33 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &2647179576729995663
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 879574374187858334}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.47240838, y: 1.0453893, z: 0.4724084}
+  m_Center: {x: 0.00000029802322, y: 0.5218218, z: -0.01521682}
 --- !u!1001 &7582421946229053094
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 540203906306712356}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 248e3efdbb5ed2e44a4da788ad9702dd,
@@ -157,6 +180,9 @@ PrefabInstance:
       value: FloorMetalBollardBaseSingle
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 248e3efdbb5ed2e44a4da788ad9702dd, type: 3}
 --- !u!4 &7976039777908994381 stripped
 Transform:

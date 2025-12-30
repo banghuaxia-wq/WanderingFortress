@@ -1,4 +1,5 @@
 using UnityEngine;
+using WF.Gameplay.Core.Data;
 
 namespace WF.Gameplay.Systems.Inventory.Items.Weapons
 {
@@ -6,5 +7,11 @@ namespace WF.Gameplay.Systems.Inventory.Items.Weapons
     public class UnarmedWeaponItem : WeaponItem
     {
         // Unarmed specific logic
+
+        protected override void OnValidate()
+        {
+            base.OnValidate();
+            SetCategory(WeaponCategory.Unarmed);
+        }
     }
 }

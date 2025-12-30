@@ -2,6 +2,7 @@
 
 ## 项目概述
 基于SOC（关注点分离）原则的Unity游戏架构，提供清晰的模块划分和依赖管理。
+- 项目整体运行方式与对外接口总览见 `../../PROJECT_OVERVIEW.md`
 
 ## 🏗️ 架构层次
 
@@ -34,6 +35,8 @@
 - `Camera/` - 摄像机控制
 - `Weapons/` - 武器系统
 - `Items/` - 物品系统
+- `Building/` - 建筑网格与放置系统
+- `WorldSimulation/` - 动态实体距离分级与唤醒系统
 
 ### [UI/](./UI/README.md)
 - `HUD/` - 平视显示器
@@ -48,3 +51,4 @@
 - 异步规范：优先使用 `UniTask`，所有异步方法以 `Async` 结尾并接受 `CancellationToken`。
 - 资源管理：禁止硬编码路径，动态资源统一使用 Addressables 或 `AssetReference`。
 - 文档优先：实现前先阅读根与子模块 README；重大变更后更新相关 README 的脚本清单与职责说明。
+- 文档补充：当 `PROJECT_OVERVIEW.md` 中的接口/流程发生变化时，同步维护该文件。

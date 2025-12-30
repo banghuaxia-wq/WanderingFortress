@@ -8,6 +8,7 @@ namespace WF.Gameplay.Core.Interfaces
         string ItemId { get; }
         string DisplayName { get; }
         ItemType Type { get; }
+        ItemTag Tags { get; }
         Sprite Icon { get; }
         float Weight { get; }
         string Description { get; }

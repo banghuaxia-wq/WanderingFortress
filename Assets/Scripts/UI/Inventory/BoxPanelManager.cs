@@ -44,13 +44,15 @@ namespace WF.Gameplay.UI.Inventory
                 var po = go.GetComponent<WF.Gameplay.Core.Utilities.Pooling.PooledObject>();
                 if (po != null) slotPool.Release(go); else GameObject.Destroy(go);
             }
-            int count = d.Items.Count;
-            for (int i = 0; i < count; i++)
+
+            int slotCount = d.SlotLimit > 0 ? d.SlotLimit : d.Items.Count;
+            for (int i = 0; i < slotCount; i++)
             {
                 var slot = slotPool.Get(slotPrefab, content);
-                var item = d.Items[i];
-                slot.Bind(item);
+                slot.SetSlotType(UISlotType.Package);
                 slot.SetMeta(TransferSource.Box, currentContainerId, i);
+                var item = (d.Items != null && i >= 0 && i < d.Items.Count) ? d.Items[i] : null;
+                slot.Bind(item);
             }
         }
     }

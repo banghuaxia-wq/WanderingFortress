@@ -1,4 +1,5 @@
 using UnityEngine;
+using WF.Gameplay.Core.Data;
 using WF.Gameplay.Core.Interfaces;
 
 namespace WF.Gameplay.Systems.Inventory.Items
@@ -8,9 +9,11 @@ namespace WF.Gameplay.Systems.Inventory.Items
     {
         [SerializeField] private int maxStack = 99;
         [SerializeField] private float cooldown = 0f;
+        [SerializeField] private GameObject projectilePrefab;
         
         public int MaxStack => maxStack;
         public float Cooldown => cooldown;
+        public GameObject ProjectilePrefab => projectilePrefab;
         
         public int CurrentStack { get; set; }
 
@@ -24,6 +27,12 @@ namespace WF.Gameplay.Systems.Inventory.Items
         public bool CanStackWith(IItem other)
         {
             return other != null && other.ItemId == ItemId;
+        }
+
+        protected override void OnValidate()
+        {
+            base.OnValidate();
+            SetDefaultType(ItemType.Ammo);
         }
     }
 }

@@ -6,7 +6,7 @@ namespace WF.Gameplay.Systems.Inventory.Items
 {
     public abstract class WeaponItem : ItemBase, IEquippable
     {
-        [SerializeField] private EquipmentSlotType slotType = EquipmentSlotType.Gun;
+        [SerializeField] private EquipmentSlotType slotType = EquipmentSlotType.MainHand;
         
         public EquipmentSlotType SlotType => slotType;
 

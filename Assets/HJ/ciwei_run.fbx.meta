@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Art/Models/Hedgehog/Hedgehog.fbx.meta
+guid: aeea61ee053d11b47aa9a522075735b0
+========
 guid: 3ef916e1e14d06942a64a10ad8f2b86c
+>>>>>>>> origin/hj:Assets/HJ/ciwei_run.fbx.meta
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
