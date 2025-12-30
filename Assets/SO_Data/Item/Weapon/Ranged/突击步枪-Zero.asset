@@ -25,24 +25,29 @@ MonoBehaviour:
   category: 2
   attackData:
     Type: 0
-    Damage: 0
-    AttackSpeed: 0
-    Range: 0
-    Cooldown: 0
+    Damage: 10
+    AttackSpeed: 1
+    Range: 100
+    Cooldown: 0.1
     Cost:
-      AmmoItemId: 
-      AmmoCount: 0
+      AmmoItemId: "\u6807\u51C6\u6B65\u67AA\u5B50\u5F39"
+      AmmoCount: 1
       StaminaCost: 0
     StunValue: 0
     ProjectilePrefab: {fileID: 0}
     ProjectileCount: 1
-    SpreadAngle: 0
-    ProjectileSpeed: 50
-    ProjectileLifetime: 5
-    NoiseRadius: 0
+    SpreadAngle: 1
+    ProjectileSpeed: 5
+    ProjectileLifetime: 3
+    NoiseRadius: 8
     NoiseType: 2
     VerticalRecoil: 0
     HorizontalRecoil: 0
     RecoilDecay: 0
-  maxAmmo: 0
-  attackBehavior: {fileID: 0}
+    ReloadDurationSeconds: 1.2
+    SupportedAmmoItemIds:
+    - "\u6807\u51C6\u6B65\u67AA\u5B50\u5F39"
+    - "\u52A3\u8D28\u6B65\u67AA\u5B50\u5F39"
+    - "\u6B65\u67AA\u9EBB\u9189\u5F39"
+  maxAmmo: 30
+  attackBehavior: {fileID: 11400000, guid: bdfd14b7cc3952949bfa899610c1068a, type: 2}

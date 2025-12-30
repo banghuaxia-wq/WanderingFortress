@@ -44,5 +44,7 @@ MonoBehaviour:
     VerticalRecoil: 0
     HorizontalRecoil: 0
     RecoilDecay: 0
+    ReloadDurationSeconds: 1.2
+    SupportedAmmoItemIds: []
   maxAmmo: 0
-  attackBehavior: {fileID: 0}
+  attackBehavior: {fileID: 11400000, guid: bdfd14b7cc3952949bfa899610c1068a, type: 2}

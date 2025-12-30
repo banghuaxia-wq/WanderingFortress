@@ -14,6 +14,15 @@ namespace WF.Gameplay.Systems.Developer
 {
     public class DeveloperManager : MonoBehaviour
     {
+        [System.Serializable]
+        private class StartingItemEntry
+        {
+            public ItemBase itemAsset;
+            public int count = 1;
+        }
+
+        private static bool _startingItemsGrantedThisSession;
+
         [Header("Targets")]
         [SerializeField] private GameObject targetContainerObject;
         [SerializeField] private PlayerStats playerStats;
@@ -30,6 +39,11 @@ namespace WF.Gameplay.Systems.Developer
         [SerializeField] private string invItemId = "DevItem"; // Fallback ID
         [SerializeField] private int invItemCount = 1;
 
+        [Header("Starting Inventory")]
+        [SerializeField] private bool grantStartingItemsOnStart = true;
+        [SerializeField] private bool grantStartingItemsOnlyOnce = true;
+        [SerializeField] private List<StartingItemEntry> startingItems = new List<StartingItemEntry>();
+
         [Header("Container Item Settings")]
         [SerializeField] private ItemBase boxItemAsset;
         [SerializeField] private string boxItemId = "DevItem"; // Fallback ID
@@ -37,6 +51,42 @@ namespace WF.Gameplay.Systems.Developer
 
         [Header("Save Settings")]
         [SerializeField] private string saveFileName = "save.json";
+
+        private void Start()
+        {
+            if (grantStartingItemsOnStart)
+            {
+                GrantStartingItems();
+            }
+        }
+
+        [ContextMenu("Grant Starting Items")]
+        public void GrantStartingItems()
+        {
+            if (grantStartingItemsOnlyOnce && _startingItemsGrantedThisSession) return;
+
+            var inv = PlayerInventory.Instance;
+            if (inv == null)
+            {
+                Debug.LogWarning("PlayerInventory not found.");
+                return;
+            }
+
+            if (startingItems != null)
+            {
+                for (int i = 0; i < startingItems.Count; i++)
+                {
+                    var entry = startingItems[i];
+                    if (entry == null || entry.itemAsset == null) continue;
+                    int count = Mathf.Max(1, entry.count);
+                    var item = ItemFactory.CreateItemStack(entry.itemAsset, count);
+                    if (item == null) continue;
+                    inv.Add(item);
+                }
+            }
+
+            _startingItemsGrantedThisSession = true;
+        }
 
         [ContextMenu("Add Item To Container")]
         public void AddItemToContainer()

@@ -20,6 +20,8 @@ namespace WF.Gameplay.Systems.Weapons.Projectile
         [SerializeField] private bool autoConfigurePhysics = true;
         [Tooltip("子弹击中环境后是否销毁")]
         [SerializeField] private bool destroyOnEnvironmentHit = true;
+        [SerializeField] private float armDelaySeconds = 0.02f;
+        [SerializeField] private bool useContinuousCast = true;
 
         // 子弹的飞行速度
         private float _speed;
@@ -35,6 +37,7 @@ namespace WF.Gameplay.Systems.Weapons.Projectile
         private Rigidbody _rigidbody;
         // 子弹的碰撞体组件
         private Collider _collider;
+        private float _castRadius;
         public enum ProjectileBehaviorType { Damage, Capture, Recall }
         [SerializeField] private ProjectileBehaviorType behavior = ProjectileBehaviorType.Damage;
         [SerializeField] private float captureLevel = 1f;
@@ -46,6 +49,7 @@ namespace WF.Gameplay.Systems.Weapons.Projectile
         {
             _rigidbody = GetComponent<Rigidbody>();
             _collider = GetComponent<Collider>();
+            _castRadius = ResolveCastRadius(_collider);
 
             if (autoConfigurePhysics)
             {
@@ -91,6 +95,15 @@ namespace WF.Gameplay.Systems.Weapons.Projectile
             }
 
             float frameDistance = _speed * Time.deltaTime;
+            if (useContinuousCast && _lifeTimer >= Mathf.Max(0f, armDelaySeconds))
+            {
+                if (TryCastHit(frameDistance, out var hit))
+                {
+                    HandleHit(hit.collider);
+                    return;
+                }
+            }
+
             transform.position += _direction * frameDistance;
             _lifeTimer += Time.deltaTime;
 
@@ -106,9 +119,23 @@ namespace WF.Gameplay.Systems.Weapons.Projectile
         /// <param name="other">与之碰撞的另一个碰撞体</param>
         private void OnTriggerEnter(Collider other)
         {
+            if (_lifeTimer < Mathf.Max(0f, armDelaySeconds)) return;
+            HandleHit(other);
+        }
+
+        private void HandleHit(Collider other)
+        {
+            if (other == null) return;
+
             if (!IsLayerHittable(other.gameObject.layer))
             {
                 return;
+            }
+
+            if (_payload != null && _payload.Source != null)
+            {
+                var sourceTransform = _payload.Source.transform;
+                if (other.transform == sourceTransform || other.transform.IsChildOf(sourceTransform)) return;
             }
 
             switch (behavior)
@@ -120,10 +147,9 @@ namespace WF.Gameplay.Systems.Weapons.Projectile
                         if (_payload != null && _payload.Source != null)
                         {
                             var sourceTransform = _payload.Source.transform;
-                            if (other.transform == sourceTransform || other.transform.IsChildOf(sourceTransform)) return;
                             var sourceRoot = sourceTransform.root != null ? sourceTransform.root.gameObject : _payload.Source;
                             var otherRoot = other.transform.root != null ? other.transform.root.gameObject : other.gameObject;
-                            if (sourceRoot != null && otherRoot != null && sourceRoot.layer == otherRoot.layer) return;
+                            if (sourceRoot != null && otherRoot != null && sourceRoot == otherRoot) return;
                         }
 
                         dmg.TakeDamage(_payload);
@@ -156,6 +182,32 @@ namespace WF.Gameplay.Systems.Weapons.Projectile
             {
                 ReturnToPool();
             }
+        }
+
+        private bool TryCastHit(float frameDistance, out RaycastHit hit)
+        {
+            hit = default;
+            if (_castRadius <= 0f) return false;
+
+            Vector3 origin = transform.position;
+            if (frameDistance <= 0f) return false;
+
+            int mask = hitMask == 0 ? Physics.DefaultRaycastLayers : hitMask.value;
+            return Physics.SphereCast(origin, _castRadius, _direction, out hit, frameDistance, mask, QueryTriggerInteraction.Collide);
+        }
+
+        private static float ResolveCastRadius(Collider col)
+        {
+            if (col == null) return 0.05f;
+            if (col is SphereCollider sphere)
+            {
+                float maxScale = Mathf.Max(col.transform.lossyScale.x, col.transform.lossyScale.y, col.transform.lossyScale.z);
+                return Mathf.Max(0.001f, sphere.radius * maxScale);
+            }
+
+            var bounds = col.bounds;
+            float r = Mathf.Min(bounds.extents.x, bounds.extents.y, bounds.extents.z);
+            return Mathf.Max(0.001f, r);
         }
 
         /// <summary>

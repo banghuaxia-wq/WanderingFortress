@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace WF.Gameplay.Core.Data
@@ -28,5 +29,10 @@ namespace WF.Gameplay.Core.Data
         public float VerticalRecoil;
         public float HorizontalRecoil;
         public float RecoilDecay;
+
+        [Tooltip("换弹耗时（秒）")]
+        public float ReloadDurationSeconds = 1.2f;
+
+        public List<string> SupportedAmmoItemIds = new List<string>();
     }
 }

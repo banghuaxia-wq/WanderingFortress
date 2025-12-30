@@ -2,6 +2,8 @@ using UnityEngine;
 using WF.Gameplay.Core.Data;
 using WF.Gameplay.Core.Interfaces;
 using WF.Gameplay.Core.Utilities.Pooling;
+using WF.Gameplay.Systems.Inventory;
+using WF.Gameplay.Systems.Inventory.Items;
 using WF.Gameplay.Systems.Inventory.Items.Weapons;
 using WF.Gameplay.Systems.Weapons.Projectile;
 
@@ -32,12 +34,18 @@ namespace WF.Gameplay.Systems.Combat.AttackBehaviors
 
         private void SpawnProjectile(GameObject owner, AttackData data, Vector3 direction, Vector3 spawnPos)
         {
-            if (data.ProjectilePrefab == null) return;
+            GameObject projectilePrefab = data.ProjectilePrefab;
+            if (projectilePrefab == null)
+            {
+                projectilePrefab = TryResolveProjectilePrefabFromAmmo(data);
+            }
+
+            if (projectilePrefab == null) return;
             
             GameObject bulletInstance = null;
             if (PoolManager.Instance != null)
             {
-                bulletInstance = PoolManager.Instance.Get(data.ProjectilePrefab);
+                bulletInstance = PoolManager.Instance.Get(projectilePrefab);
                 if (bulletInstance != null)
                 {
                     bulletInstance.transform.SetPositionAndRotation(spawnPos, Quaternion.LookRotation(direction));
@@ -46,10 +54,10 @@ namespace WF.Gameplay.Systems.Combat.AttackBehaviors
             
             if (bulletInstance == null)
             {
-                bulletInstance = Instantiate(data.ProjectilePrefab, spawnPos, Quaternion.LookRotation(direction));
+                bulletInstance = Instantiate(projectilePrefab, spawnPos, Quaternion.LookRotation(direction));
                 var po = bulletInstance.GetComponent<PooledObject>();
                 if (po == null) po = bulletInstance.AddComponent<PooledObject>();
-                po.SourcePrefab = data.ProjectilePrefab;
+                po.SourcePrefab = projectilePrefab;
             }
 
             if (!bulletInstance.TryGetComponent(out Projectile projectile))
@@ -67,6 +75,18 @@ namespace WF.Gameplay.Systems.Combat.AttackBehaviors
             };
 
             projectile.Initialize(data.ProjectileSpeed, data.ProjectileLifetime, direction, payload);
+        }
+
+        private static GameObject TryResolveProjectilePrefabFromAmmo(AttackData data)
+        {
+            if (data == null) return null;
+            string ammoItemId = data.Cost.AmmoItemId;
+            if (string.IsNullOrWhiteSpace(ammoItemId)) return null;
+
+            var stack = ItemFactory.CreateItemStack(ammoItemId, 1);
+            if (stack == null) return null;
+            if (stack.Item is not AmmoItem ammo) return null;
+            return ammo.ProjectilePrefab;
         }
 
         private Vector3 ApplySpread(Vector3 baseDirection, float spreadAngle)

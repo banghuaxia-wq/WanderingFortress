@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using WF.Gameplay.Core.Data;
 using WF.Gameplay.Core.Events;
 using WF.Gameplay.Core.Interfaces;
@@ -90,6 +90,34 @@ namespace WF.Gameplay.Systems.Hatch
                     po = go.AddComponent<PooledObject>();
                 }
                 po.SourcePrefab = prefab;
+            }
+
+            int ignoreRaycastLayer = LayerMask.NameToLayer("Ignore Raycast");
+            if (ignoreRaycastLayer >= 0)
+            {
+                int desiredLayer = prefab != null ? prefab.layer : go.layer;
+
+                if (go.layer == ignoreRaycastLayer)
+                {
+                    go.layer = desiredLayer;
+                }
+
+                var colliders = go.GetComponentsInChildren<Collider>(true);
+                for (int i = 0; i < colliders.Length; i++)
+                {
+                    var col = colliders[i];
+                    if (col == null) continue;
+
+                    if (!col.enabled)
+                    {
+                        col.enabled = true;
+                    }
+
+                    if (col.gameObject.layer == ignoreRaycastLayer)
+                    {
+                        col.gameObject.layer = desiredLayer;
+                    }
+                }
             }
 
             if (go.GetComponent<WF.Gameplay.Systems.Buffs.BuffManager>() == null)

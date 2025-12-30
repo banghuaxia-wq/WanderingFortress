@@ -28484,6 +28484,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shootOrigin: {fileID: 4119094537984507759}
+  defaultShootOriginHeight: 1
   aimLayerMask:
     serializedVersion: 2
     m_Bits: 0
@@ -29207,7 +29208,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2421496865716317604
 RectTransform:
   m_ObjectHideFlags: 0
@@ -29929,11 +29930,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4338453226655092590, guid: afcd96cbec0375248833c51691ec4e9d,
-        type: 3}
-      propertyPath: m_Constraints
-      value: 112
-      objectReference: {fileID: 0}
     - target: {fileID: 8540214952883440563, guid: afcd96cbec0375248833c51691ec4e9d,
         type: 3}
       propertyPath: m_Name
@@ -30256,7 +30252,7 @@ Transform:
   m_GameObject: {fileID: 7357480394780727292}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.122, y: 0.883, z: 0.542}
+  m_LocalPosition: {x: 0.122, y: 0.653, z: 0.542}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -32334,6 +32330,13 @@ MonoBehaviour:
   invItemAsset: {fileID: 11400000, guid: 529a8b91bb868e24f930b200ba3bd0e7, type: 2}
   invItemId: DevItem
   invItemCount: 1
+  grantStartingItemsOnStart: 1
+  grantStartingItemsOnlyOnce: 1
+  startingItems:
+  - itemAsset: {fileID: 11400000, guid: 28a0cdb7deb7e594b97d00e75b1d5d7b, type: 2}
+    count: 1
+  - itemAsset: {fileID: 11400000, guid: ac580608cf974b74ab5c5423165e5489, type: 2}
+    count: 600
   boxItemAsset: {fileID: 0}
   boxItemId: DevItem
   boxItemCount: 1

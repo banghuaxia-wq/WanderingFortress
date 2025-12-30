@@ -9,9 +9,11 @@ namespace WF.Gameplay.Systems.Inventory.Items
     {
         [SerializeField] private int maxStack = 99;
         [SerializeField] private float cooldown = 0f;
+        [SerializeField] private GameObject projectilePrefab;
         
         public int MaxStack => maxStack;
         public float Cooldown => cooldown;
+        public GameObject ProjectilePrefab => projectilePrefab;
         
         public int CurrentStack { get; set; }
 

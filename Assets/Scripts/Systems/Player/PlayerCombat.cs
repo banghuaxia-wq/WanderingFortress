@@ -11,10 +11,12 @@ namespace WF.Gameplay.Systems.Player
     public class PlayerCombat : MonoBehaviour, IPlayerCombatState
     {
         private const string FireInputName = "Fire1";
+        private const KeyCode ReloadKey = KeyCode.R;
         private const float MinAimDirectionSqr = 0.0001f;
 
         [Tooltip("子弹生成的起始位置")]
         [SerializeField] private Transform shootOrigin;
+        [SerializeField] private float defaultShootOriginHeight = 1.0f;
         [Tooltip("用于射线检测以确定瞄准点的层")]
         [SerializeField] private LayerMask aimLayerMask;
         
@@ -29,13 +31,28 @@ namespace WF.Gameplay.Systems.Player
         private bool _inputEnabled = true;
         private PlayerMove _playerMove; // 玩家移动组件引用（用于查询/控制冲刺状态）（中文注释）
 
+        private Coroutine _reloadRoutine;
+        private IWeaponItem _reloadingWeapon;
+        private string _reloadProgressId;
+
         public Vector2 CrosshairOffset => _currentCrosshairOffset;
 
         private void Awake()
         {
             if (shootOrigin == null)
             {
-                shootOrigin = transform;
+                var existing = transform.Find("ShootOrigin");
+                if (existing != null)
+                {
+                    shootOrigin = existing;
+                }
+                else
+                {
+                    var go = new GameObject("ShootOrigin");
+                    go.transform.SetParent(transform, false);
+                    go.transform.localPosition = new Vector3(0f, Mathf.Max(0f, defaultShootOriginHeight), 0f);
+                    shootOrigin = go.transform;
+                }
             }
 
             _playerMove = GetComponent<PlayerMove>();
@@ -66,14 +83,26 @@ namespace WF.Gameplay.Systems.Player
             {
                 _currentWeapon = WeaponManager.Instance.GetCurrentWeapon();
             }
+
+            if (_reloadingWeapon != null && _currentWeapon != _reloadingWeapon)
+            {
+                CancelReload();
+            }
             
             if (_currentWeapon == null || _currentWeapon.AttackData == null)
             {
                 return;
             }
 
+            if (Input.GetKeyDown(ReloadKey))
+            {
+                TryStartReload();
+            }
+
             ApplyRecoilDecay();
             UpdateCrosshairOffset();
+
+            if (_reloadRoutine != null) return;
 
             bool wantsAttack = WantsAttackInput(_currentWeapon.AttackData);
             if (!wantsAttack) return;
@@ -135,6 +164,100 @@ namespace WF.Gameplay.Systems.Player
             }
         }
 
+        private void TryStartReload()
+        {
+            if (_reloadRoutine != null) return;
+            if (_currentWeapon == null || _currentWeapon.AttackData == null) return;
+            if (!_currentWeapon.CanReload()) return;
+
+            var inventory = WF.Gameplay.Systems.InventorySystem.PlayerInventory.Instance;
+            if (inventory == null) return;
+
+            string ammoItemId = _currentWeapon.AttackData.Cost.AmmoItemId;
+            if (string.IsNullOrWhiteSpace(ammoItemId))
+            {
+                ammoItemId = TryResolveAmmoItemIdFromSupportedList(inventory, _currentWeapon.AttackData);
+                if (string.IsNullOrWhiteSpace(ammoItemId)) return;
+
+                var cost = _currentWeapon.AttackData.Cost;
+                cost.AmmoItemId = ammoItemId;
+                _currentWeapon.AttackData.Cost = cost;
+            }
+
+            int needed = _currentWeapon.MaxAmmo - _currentWeapon.CurrentAmmo;
+            if (needed <= 0) return;
+
+            int available = inventory.GetItemCount(ammoItemId);
+            if (available <= 0) return;
+
+            float durationSeconds = Mathf.Max(0.01f, _currentWeapon.AttackData.ReloadDurationSeconds);
+
+            var progressSystem = WF.Gameplay.Systems.Progress.ProgressSystem.Instance;
+            _reloadProgressId = progressSystem != null
+                ? progressSystem.RunTimedProgress(durationSeconds, "换弹中", ProgressViewMode.Hud, false, $"reload_{gameObject.GetInstanceID()}")
+                : null;
+
+            _reloadingWeapon = _currentWeapon;
+            _reloadRoutine = StartCoroutine(ReloadRoutine(durationSeconds, inventory, _reloadingWeapon));
+        }
+
+        private static string TryResolveAmmoItemIdFromSupportedList(IPlayerInventory inventory, AttackData data)
+        {
+            if (inventory == null || data == null) return null;
+            var ids = data.SupportedAmmoItemIds;
+            if (ids == null || ids.Count == 0) return null;
+
+            for (int i = 0; i < ids.Count; i++)
+            {
+                string id = ids[i];
+                if (string.IsNullOrWhiteSpace(id)) continue;
+                if (inventory.GetItemCount(id) > 0) return id;
+            }
+
+            return null;
+        }
+
+        private System.Collections.IEnumerator ReloadRoutine(float durationSeconds, IPlayerInventory inventory, IWeaponItem weapon)
+        {
+            yield return new WaitForSeconds(durationSeconds);
+
+            if (_reloadingWeapon == null || weapon == null || _reloadingWeapon != weapon)
+            {
+                ClearReloadState();
+                yield break;
+            }
+
+            if (inventory != null)
+            {
+                weapon.TryReload(inventory);
+            }
+
+            ClearReloadState();
+        }
+
+        private void CancelReload()
+        {
+            if (_reloadRoutine != null)
+            {
+                StopCoroutine(_reloadRoutine);
+            }
+
+            var progressSystem = WF.Gameplay.Systems.Progress.ProgressSystem.Instance;
+            if (progressSystem != null && !string.IsNullOrWhiteSpace(_reloadProgressId))
+            {
+                progressSystem.End(_reloadProgressId, ProgressEndReason.Cancelled);
+            }
+
+            ClearReloadState();
+        }
+
+        private void ClearReloadState()
+        {
+            _reloadRoutine = null;
+            _reloadingWeapon = null;
+            _reloadProgressId = null;
+        }
+
         private Vector3 GetAimDirection()
         {
             if (_gameplayCamera == null)
@@ -155,8 +278,9 @@ namespace WF.Gameplay.Systems.Player
             Vector3 mouse = new Vector3(Input.mousePosition.x + offset.x, Input.mousePosition.y + offset.y, 0f);
             
             Ray aimRay = _gameplayCamera.ScreenPointToRay(mouse);
+            int mask = aimLayerMask == 0 ? Physics.DefaultRaycastLayers : aimLayerMask.value;
 
-            if (Physics.Raycast(aimRay, out RaycastHit hitInfo, Mathf.Infinity, aimLayerMask))
+            if (Physics.Raycast(aimRay, out RaycastHit hitInfo, Mathf.Infinity, mask))
             {
                 Vector3 directionToHit = hitInfo.point - shootOrigin.position;
                 directionToHit.y = 0f;

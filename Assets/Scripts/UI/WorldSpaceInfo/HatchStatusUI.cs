@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UCamera = UnityEngine.Camera;
@@ -152,15 +152,6 @@ namespace WF.Gameplay.UI.WorldSpaceInfo
                 return;
             }
 
-            if (_camera == null)
-            {
-                AcquireCamera();
-                if (_camera == null)
-                {
-                    return;
-                }
-            }
-
             Vector3 worldPosition = _target.position + worldOffset;
 
             bool hasCanvasGroup = canvasGroup != null;
@@ -168,6 +159,10 @@ namespace WF.Gameplay.UI.WorldSpaceInfo
             if (_isWorldSpaceCanvas)
             {
                 rootPanelTransform.position = worldPosition;
+                if (_camera == null)
+                {
+                    AcquireCamera();
+                }
                 if (_camera != null)
                 {
                     rootPanelTransform.forward = _camera.transform.forward;
@@ -175,6 +170,15 @@ namespace WF.Gameplay.UI.WorldSpaceInfo
             }
             else
             {
+                if (_camera == null)
+                {
+                    AcquireCamera();
+                    if (_camera == null)
+                    {
+                        return;
+                    }
+                }
+
                 Vector3 screenPoint = _camera.WorldToScreenPoint(worldPosition);
 
                 if (hasCanvasGroup && screenPoint.z < MinDistanceToCamera)
@@ -243,19 +247,13 @@ namespace WF.Gameplay.UI.WorldSpaceInfo
         private void HandleHealthChanged(float currentHealth, float maxHealth)
         {
             UpdateHealthBar(currentHealth);
+            ShowStatus();
         }
 
         private void HandleStunChanged(float currentStun, float maxStun)
         {
             UpdateStunBar(currentStun);
-            if (currentStun <= 0f && !alwaysVisible)
-            {
-                HideStatusImmediate();
-            }
-            else
-            {
-                ShowStatus();
-            }
+            ShowStatus();
             _lastStun = currentStun;
         }
 

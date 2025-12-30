@@ -22,3 +22,4 @@ MonoBehaviour:
   description: 
   maxStack: 99
   cooldown: 0
+  projectilePrefab: {fileID: 154440530695813302, guid: 361c3cf0f81b89c4c925f847a32cd8cc, type: 3}
